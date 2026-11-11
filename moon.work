@@ -1,0 +1,9 @@
+members = [
+  "modules/m1_syntax_context",
+  "modules/m2_universe_cumul",
+  "modules/m3_pi_sigma_types",
+  "modules/m4_curry_howard_prop",
+  "modules/m5_fibration_kan",
+  "modules/m6_chu_galois_bridge",
+  "modules/m7_unified_kernel",
+]

@@ -1,0 +1,183 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m4_curry_howard_prop"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn ch_type_to_formula(CHType) -> PropFormula
+
+pub fn count_cuts(SequentProof) -> Int32
+
+pub fn cps_dneg(CHType, CHType) -> CHType
+
+pub fn cps_neg(CHType, CHType) -> CHType
+
+pub fn cps_translate_formula(PropFormula, CHType) -> CHType
+
+pub fn eliminate_cuts(SequentProof) -> SequentProof raise LogicError
+
+pub fn extract_computational_program(Array[CHType], CHTerm) -> ExtractedProg raise LogicError
+
+pub fn formula_to_ch_type(PropFormula) -> CHType
+
+pub fn infer_ch_term(Array[CHType], CHTerm) -> CHType raise LogicError
+
+pub fn is_prop_irrelevant(CHType) -> Bool
+
+pub fn normalize_ch_term(CHTerm) -> CHTerm
+
+pub fn sequent_to_ch_term(SequentProof) -> CHTerm
+
+pub fn shift_ch_term(CHTerm, Int32, Int32) -> CHTerm
+
+pub fn shift_ch_type_obj(CHType, Int32, Int32) -> CHType
+
+pub fn shift_obj_term(ObjTerm, Int32, Int32) -> ObjTerm
+
+pub fn subst_ch_term(CHTerm, Int32, CHTerm) -> CHTerm
+
+pub fn subst_ch_term_obj(CHTerm, Int32, ObjTerm) -> CHTerm
+
+pub fn subst_ch_type_obj(CHType, Int32, ObjTerm) -> CHType
+
+pub fn subst_obj_term(ObjTerm, Int32, ObjTerm) -> ObjTerm
+
+pub fn synthesize_cps_peirce(CHType, CHType) -> CHTerm
+
+pub fn synthesize_dn_excluded_middle(CHType) -> CHTerm
+
+pub fn weaken_sequent(SequentProof, Int32, Int32) -> SequentProof
+
+// Errors
+pub suberror LogicError {
+  UnboundProofVar(Int32)
+  ProofTypeMismatch(CHType, CHType)
+  ExpectedFunctionProof(CHType)
+  ExpectedProductProof(CHType)
+  ExpectedSumProof(CHType)
+  ExpectedForallProof(CHType)
+  ExpectedExistsProof(CHType)
+  SquashEliminationIntoRelevantType(CHType)
+  InvalidSequentRule(String)
+}
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) enum CHTerm {
+  PTVar(Int32)
+  PTUnit
+  PTAbsurd(CHType, CHTerm)
+  PTPair(CHTerm, CHTerm)
+  PTFst(CHTerm)
+  PTSnd(CHTerm)
+  PTInl(CHType, CHTerm)
+  PTInr(CHType, CHTerm)
+  PTCase(CHTerm, CHTerm, CHTerm)
+  PTLam(CHType, CHTerm)
+  PTApp(CHTerm, CHTerm)
+  PTDepLam(DomainSort, CHTerm)
+  PTDepApp(CHTerm, ObjTerm)
+  PTPack(ObjTerm, CHTerm, CHType)
+  PTUnpack(CHTerm, CHTerm)
+  PTRefl(DomainSort, ObjTerm)
+  PTSquashBox(CHTerm)
+  PTLetSquash(CHTerm, CHTerm)
+}
+pub fn CHTerm::equal(Self, Self) -> Bool
+pub fn CHTerm::not_equal(Self, Self) -> Bool
+pub fn CHTerm::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum CHType {
+  TUnit
+  TEmpty
+  TPredFamily(String, Array[ObjTerm])
+  TId(DomainSort, ObjTerm, ObjTerm)
+  TProd(CHType, CHType)
+  TSum(CHType, CHType)
+  TArrow(CHType, CHType)
+  TPi(String, DomainSort, CHType)
+  TSigma(String, DomainSort, CHType)
+  TSquash(CHType)
+}
+pub fn CHType::equal(Self, Self) -> Bool
+pub fn CHType::not_equal(Self, Self) -> Bool
+pub fn CHType::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct DomainSort {
+  name : String
+}
+pub fn DomainSort::equal(Self, Self) -> Bool
+pub fn DomainSort::not_equal(Self, Self) -> Bool
+pub fn DomainSort::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum ExtractedProg {
+  EPVar(Int32)
+  EPObj(ObjTerm)
+  EPErasedProp
+  EPPair(ExtractedProg, ExtractedProg)
+  EPFst(ExtractedProg)
+  EPSnd(ExtractedProg)
+  EPInl(ExtractedProg)
+  EPInr(ExtractedProg)
+  EPCase(ExtractedProg, ExtractedProg, ExtractedProg)
+  EPLam(ExtractedProg)
+  EPApp(ExtractedProg, ExtractedProg)
+}
+pub fn ExtractedProg::equal(Self, Self) -> Bool
+pub fn ExtractedProg::not_equal(Self, Self) -> Bool
+pub fn ExtractedProg::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum ObjTerm {
+  OVar(Int32)
+  OConst(String)
+  OFun(String, Array[ObjTerm])
+}
+pub fn ObjTerm::equal(Self, Self) -> Bool
+pub fn ObjTerm::not_equal(Self, Self) -> Bool
+pub fn ObjTerm::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum PropFormula {
+  FTop
+  FBot
+  FAtom(String, Array[ObjTerm])
+  FEq(DomainSort, ObjTerm, ObjTerm)
+  FConj(PropFormula, PropFormula)
+  FDisj(PropFormula, PropFormula)
+  FImpl(PropFormula, PropFormula)
+  FForall(String, DomainSort, PropFormula)
+  FExists(String, DomainSort, PropFormula)
+  FSquash(PropFormula)
+}
+pub fn PropFormula::equal(Self, Self) -> Bool
+pub fn PropFormula::not_equal(Self, Self) -> Bool
+pub fn PropFormula::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum SequentProof {
+  SInit(Int32, PropFormula)
+  STopR
+  SBotL(Int32, PropFormula)
+  SConjR(SequentProof, SequentProof)
+  SConjL1(Int32, PropFormula, PropFormula, SequentProof)
+  SConjL2(Int32, PropFormula, PropFormula, SequentProof)
+  SDisjR1(PropFormula, SequentProof)
+  SDisjR2(PropFormula, SequentProof)
+  SDisjL(Int32, PropFormula, PropFormula, SequentProof, SequentProof)
+  SImplR(PropFormula, SequentProof)
+  SImplL(Int32, PropFormula, PropFormula, SequentProof, SequentProof)
+  SCut(PropFormula, SequentProof, SequentProof)
+}
+pub fn SequentProof::equal(Self, Self) -> Bool
+pub fn SequentProof::not_equal(Self, Self) -> Bool
+pub fn SequentProof::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

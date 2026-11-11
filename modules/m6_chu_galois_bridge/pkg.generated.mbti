@@ -1,0 +1,100 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m6_chu_galois_bridge"
+
+import {
+  "dtt/m1_syntax_context",
+  "dtt/m2_universe_cumul",
+  "dtt/m3_pi_sigma_types",
+  "dtt/m4_curry_howard_prop",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn build_dtt_chu_space(@m3_pi_sigma_types.JudgmentCtx, Array[@m3_pi_sigma_types.CoreTm], Array[@m3_pi_sigma_types.CoreTm]) -> ChuTypingSpace raise
+
+pub fn build_universe_chu_space(@m2_universe_cumul.UniverseGraph, Array[@m2_universe_cumul.AlgLevel], Array[@m2_universe_cumul.AlgLevel]) -> ChuTypingSpace raise BridgeError
+
+pub fn chu_dual(ChuTypingSpace) -> ChuTypingSpace
+
+pub fn collapse_localized_roof(LocalizedRoof) -> @m1_syntax_context.SynExpr
+
+pub fn compile_ch_term_to_core(Array[Bool], @m4_curry_howard_prop.CHTerm) -> @m3_pi_sigma_types.CoreTm raise BridgeError
+
+pub fn compile_ch_type_to_core(Array[Bool], @m4_curry_howard_prop.CHType) -> @m3_pi_sigma_types.CoreTm raise BridgeError
+
+pub fn compile_obj_to_core(Array[Bool], @m4_curry_howard_prop.ObjTerm) -> @m3_pi_sigma_types.CoreTm raise BridgeError
+
+pub fn compile_sort_to_core(@m4_curry_howard_prop.DomainSort) -> @m3_pi_sigma_types.CoreTm raise BridgeError
+
+pub fn compose_game_strategies_hiding(GameStrategy, GameStrategy) -> GameStrategy raise
+
+pub fn compose_localized_roofs(LocalizedRoof, LocalizedRoof) -> LocalizedRoof raise BridgeError
+
+pub fn monad_distributive_writer_squash(@m4_curry_howard_prop.CHType, @m4_curry_howard_prop.CHType) -> @m4_curry_howard_prop.CHTerm
+
+pub fn tensor_sum_distribute_backward(@m4_curry_howard_prop.DomainSort, @m4_curry_howard_prop.CHType, @m4_curry_howard_prop.CHType) -> @m4_curry_howard_prop.CHTerm
+
+pub fn tensor_sum_distribute_forward(@m4_curry_howard_prop.DomainSort, @m4_curry_howard_prop.CHType, @m4_curry_howard_prop.CHType) -> @m4_curry_howard_prop.CHTerm
+
+pub fn verify_chu_morphism(ChuTypingSpace, ChuTypingSpace, ChuMorphism) -> Bool raise BridgeError
+
+pub fn verify_curry_morita_equivalence(@m3_pi_sigma_types.JudgmentCtx, @m3_pi_sigma_types.CoreTm, @m3_pi_sigma_types.CoreTm, @m3_pi_sigma_types.CoreTm) -> Bool raise
+
+// Errors
+pub(all) suberror BridgeError {
+  ChuDimensionOverflow(Int32)
+  UnsupportedSortInKernelBridge(String)
+  UnsupportedConstructInKernelBridge(String)
+  ChuMorphismAdjointViolation(Int32, Int32)
+  LocalizationIncompatibleMidpoint
+}
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct ChuMorphism {
+  forward_term_map : Array[Int32]
+  adjoint_type_map : Array[Int32]
+}
+pub fn ChuMorphism::equal(Self, Self) -> Bool
+pub fn ChuMorphism::not_equal(Self, Self) -> Bool
+pub fn ChuMorphism::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct ChuTypingSpace {
+  num_terms : Int32
+  num_types : Int32
+  rows : Array[UInt64]
+  cols : Array[UInt64]
+}
+pub fn ChuTypingSpace::concept_closure(Self, UInt64) -> (UInt64, UInt64)
+pub fn ChuTypingSpace::equal(Self, Self) -> Bool
+pub fn ChuTypingSpace::galois_models_of(Self, UInt64) -> UInt64
+pub fn ChuTypingSpace::galois_spec_of(Self, UInt64) -> UInt64
+pub fn ChuTypingSpace::not_equal(Self, Self) -> Bool
+pub fn ChuTypingSpace::to_repr(Self) -> @debug.Repr
+pub fn ChuTypingSpace::verify_galois_adjointness(Self, UInt64, UInt64) -> Bool
+
+#derive(Eq, @debug.Debug)
+pub(all) struct GameStrategy {
+  input_arena : @m4_curry_howard_prop.PropFormula
+  output_arena : @m4_curry_howard_prop.PropFormula
+  proof_strategy : @m4_curry_howard_prop.SequentProof
+}
+pub fn GameStrategy::equal(Self, Self) -> Bool
+pub fn GameStrategy::not_equal(Self, Self) -> Bool
+pub fn GameStrategy::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct LocalizedRoof {
+  dom_ty : @m1_syntax_context.SynExpr
+  cod_ty : @m1_syntax_context.SynExpr
+  unit_pads : Int32
+  roof_body : @m1_syntax_context.SynExpr
+}
+pub fn LocalizedRoof::equal(Self, Self) -> Bool
+pub fn LocalizedRoof::not_equal(Self, Self) -> Bool
+pub fn LocalizedRoof::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

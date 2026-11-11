@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/core/debug",
+  "dtt/m1_syntax_context" @m1,
+  "dtt/m2_universe_cumul" @m2,
+  "dtt/m3_pi_sigma_types" @m3,
+  "dtt/m4_curry_howard_prop" @m4,
+}

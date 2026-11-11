@@ -1,0 +1,174 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m3_pi_sigma_types"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn apply_val(Val, Val) -> Val
+
+pub fn check_is_type(JudgmentCtx, CoreTm) -> (Val, Int32) raise TypeTheoryError
+
+pub fn check_term(JudgmentCtx, CoreTm, Val) -> Unit raise TypeTheoryError
+
+pub fn conv_ty(Int32, Val, Val) -> Bool
+
+pub fn conv_val(Int32, Val, Val, Val) -> Bool
+
+pub fn decode_nat_numeral(CoreTm) -> Int32 raise TypeTheoryError
+
+pub fn dep_curried_type(CoreTm, CoreTm, CoreTm) -> CoreTm
+
+pub fn dep_curry_term(CoreTm, CoreTm, CoreTm) -> CoreTm
+
+pub fn dep_uncurried_type(CoreTm, CoreTm, CoreTm) -> CoreTm
+
+pub fn dep_uncurry_term(CoreTm, CoreTm, CoreTm) -> CoreTm
+
+pub fn deskolemize_term(CoreTm, CoreTm, CoreTm, CoreTm) -> CoreTm
+
+pub fn encode_nat_numeral(Int32) -> CoreTm
+
+pub fn eval_clos(Clos, Val) -> Val
+
+pub fn eval_clos2(Clos, Val, Val) -> Val
+
+pub fn eval_tm(Array[Val], CoreTm) -> Val
+
+pub fn fresh_neutral_var(Int32, Val) -> Val
+
+pub fn fst_val(Val) -> Val
+
+pub fn j_elim_val(Val, Val, Clos, Val, Val, Val) -> Val
+
+pub fn natrec_val(Clos, Val, Clos, Val) -> Val
+
+pub fn quote_ty(Int32, Val) -> CoreTm
+
+pub fn quote_val(Int32, Val, Val) -> CoreTm
+
+pub fn shift_core(CoreTm, Int32, Int32) -> CoreTm
+
+pub fn skolem_source_type(CoreTm, CoreTm, CoreTm) -> CoreTm
+
+pub fn skolem_target_type(CoreTm, CoreTm, CoreTm) -> CoreTm
+
+pub fn skolemize_term(CoreTm, CoreTm) -> CoreTm
+
+pub fn small_dec_val(Int32, Val) -> Val
+
+pub fn snd_val(Val) -> Val
+
+pub fn synth_term(JudgmentCtx, CoreTm) -> Val raise TypeTheoryError
+
+// Errors
+pub suberror TypeTheoryError {
+  UnboundIndex(Int32, Int32)
+  ExpectedTypeForm(String)
+  ExpectedPiType(String)
+  ExpectedSigmaType(String)
+  ExpectedNatType
+  ExpectedIdType
+  ExpectedUnivCode(Int32)
+  ConversionMismatch(CoreTm, CoreTm)
+  UniverseCumulViolation(Int32, Int32)
+  CannotSynthesizeUnannotated(String)
+}
+
+// Types and methods
+#derive(@debug.Debug)
+pub(all) struct Clos {
+  env : Array[Val]
+  body : CoreTm
+}
+pub fn Clos::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum CoreTm {
+  CVar(Int32)
+  CUniv(Int32)
+  CProp
+  CSmallEnc(Int32, CoreTm)
+  CSmallDec(Int32, CoreTm)
+  CPi(String, CoreTm, CoreTm)
+  CLam(String, CoreTm, CoreTm)
+  CApp(CoreTm, CoreTm)
+  CSigma(String, CoreTm, CoreTm)
+  CPair(CoreTm, CoreTm)
+  CFst(CoreTm)
+  CSnd(CoreTm)
+  CUnit
+  CStar
+  CNat
+  CZero
+  CSucc(CoreTm)
+  CNatRec(CoreTm, CoreTm, CoreTm, CoreTm)
+  CId(CoreTm, CoreTm, CoreTm)
+  CRefl(CoreTm)
+  CJ(CoreTm, CoreTm, CoreTm, CoreTm, CoreTm, CoreTm)
+  CSquash(CoreTm)
+  CBoxProof(CoreTm)
+  CAnn(CoreTm, CoreTm)
+}
+pub fn CoreTm::equal(Self, Self) -> Bool
+pub fn CoreTm::not_equal(Self, Self) -> Bool
+pub fn CoreTm::output(Self, &Logger) -> Unit
+pub fn CoreTm::to_repr(Self) -> @debug.Repr
+pub fn CoreTm::to_string(Self) -> String
+pub impl Show for CoreTm
+
+pub(all) struct JudgmentCtx {
+  names : Array[String]
+  types : Array[Val]
+  env : Array[Val]
+  allow_cumul : Bool
+}
+pub fn JudgmentCtx::depth(Self) -> Int32
+pub fn JudgmentCtx::empty(Bool) -> Self
+pub fn JudgmentCtx::normalize(Self, CoreTm, CoreTm) -> CoreTm
+pub fn JudgmentCtx::push_var(Self, String, Val) -> Self
+
+#derive(@debug.Debug)
+pub(all) struct Neutral {
+  head_lvl : Int32
+  spine : Array[SpineElim]
+}
+pub fn Neutral::to_repr(Self) -> @debug.Repr
+
+#derive(@debug.Debug)
+pub(all) enum SpineElim {
+  SEApp(Val, Val)
+  SEFst
+  SESnd
+  SESmallDec(Int32)
+  SENatRec(Clos, Val, Clos)
+  SEJ(Val, Val, Clos, Val, Val)
+}
+pub fn SpineElim::to_repr(Self) -> @debug.Repr
+
+#derive(@debug.Debug)
+pub(all) enum Val {
+  VNeu(Val, Neutral)
+  VUniv(Int32)
+  VProp
+  VSmallEnc(Int32, Val)
+  VPi(String, Val, Clos)
+  VLam(String, Val, Clos)
+  VSigma(String, Val, Clos)
+  VPair(Val, Val)
+  VUnit
+  VStar
+  VNat
+  VZero
+  VSucc(Val)
+  VId(Val, Val, Val)
+  VRefl(Val)
+  VSquash(Val)
+  VBoxProof(Val)
+}
+pub fn Val::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

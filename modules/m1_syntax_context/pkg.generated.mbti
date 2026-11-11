@@ -1,0 +1,228 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m1_syntax_context"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn apply_subst(SynExpr, Subst) -> SynExpr
+
+pub fn expr_level_mask_in_ctx(SynExpr, Int32) -> UInt64
+
+pub fn idx_to_lvl(Int32, Int32) -> Int32 raise SyntaxError
+
+pub fn lookup_subst(Subst, Int32) -> SynExpr
+
+pub fn lvl_to_idx(Int32, Int32) -> Int32 raise SyntaxError
+
+pub fn mk_absurd(SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_app(SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_arrow(SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_case_sum(SynExpr, SynExpr, SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_const_ref(String, Array[Int32]) -> SynExpr
+
+pub fn mk_empty_ty() -> SynExpr
+
+pub fn mk_fst(SynExpr) -> SynExpr
+
+pub fn mk_hole(Int32) -> SynExpr
+
+pub fn mk_id_ty(SynExpr, SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_inl(SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_inr(SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_j_elim(SynExpr, SynExpr, SynExpr, SynExpr, SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_lam(String, SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_nat_rec(SynExpr, SynExpr, SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_nat_ty() -> SynExpr
+
+pub fn mk_pair(SynExpr, SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_pi(String, SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_poly_univ(Int32, Int32) -> SynExpr
+
+pub fn mk_prop_sort() -> SynExpr
+
+pub fn mk_refl(SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_sigma(String, SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_small_decode(Int32, SynExpr) -> SynExpr
+
+pub fn mk_small_encode(Int32, SynExpr) -> SynExpr
+
+pub fn mk_snd(SynExpr) -> SynExpr
+
+pub fn mk_squash_intro(SynExpr) -> SynExpr
+
+pub fn mk_squash_ty(SynExpr) -> SynExpr
+
+pub fn mk_succ(SynExpr) -> SynExpr
+
+pub fn mk_sum_ty(SynExpr, SynExpr) -> SynExpr
+
+pub fn mk_unit_ty() -> SynExpr
+
+pub fn mk_unit_val() -> SynExpr
+
+pub fn mk_univ(Int32) -> SynExpr
+
+pub fn mk_var(Int32) -> SynExpr raise SyntaxError
+
+pub fn mk_var_unchecked(Int32) -> SynExpr
+
+pub fn mk_zero() -> SynExpr
+
+pub fn operad_graft(SynExpr, Array[(Int32, SynExpr)]) -> SynExpr raise SyntaxError
+
+pub fn shift_expr_simple(SynExpr, Int32, Int32) -> SynExpr
+
+pub fn subst_compose(Subst, Subst) -> Subst
+
+pub fn subst_cons(SynExpr, Subst) -> Subst
+
+pub fn subst_id() -> Subst
+
+pub fn subst_lift(Int32, Subst) -> Subst
+
+pub fn subst_shift(Int32) -> Subst
+
+pub fn subst_single(SynExpr) -> Subst
+
+pub fn try_strengthen_expr(SynExpr, Int32) -> SynExpr raise SyntaxError
+
+// Errors
+pub suberror SyntaxError {
+  InvalidDeBruijnIndex(Int32)
+  StrengtheningBlocked(Int32)
+  InvalidContextPosition(Int32)
+  NonIndependentSwap(Int32, Int32)
+  UnboundOperadSlot(Int32)
+}
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct Context {
+  entries : Array[CtxEntry]
+}
+pub fn Context::empty() -> Self
+pub fn Context::equal(Self, Self) -> Bool
+pub fn Context::extend_def(Self, String, SynExpr, SynExpr) -> Self
+pub fn Context::extend_var(Self, String, SynExpr) -> Self
+pub fn Context::is_matroid_independent_set(Self, UInt64) -> Bool
+pub fn Context::len(Self) -> Int32
+pub fn Context::lookup_entry_by_lvl(Self, Int32) -> CtxEntry raise SyntaxError
+pub fn Context::lookup_type_by_idx(Self, Int32) -> SynExpr raise SyntaxError
+pub fn Context::lvl_depends_on(Self, Int32, Int32) -> Bool
+pub fn Context::minimal_support_mask(Self, SynExpr) -> UInt64
+pub fn Context::not_equal(Self, Self) -> Bool
+pub fn Context::simplicial_strengthen_at(Self, Int32) -> Self raise SyntaxError
+pub fn Context::simplicial_weaken_at(Self, Int32, String, SynExpr) -> Self raise SyntaxError
+pub fn Context::swap_adjacent_independent(Self, Int32) -> Self raise SyntaxError
+pub fn Context::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct CtxEntry {
+  name : String
+  ty : SynExpr
+  local_def : SynExpr?
+  direct_lvl_mask : UInt64
+  trans_lvl_mask : UInt64
+}
+pub fn CtxEntry::equal(Self, Self) -> Bool
+pub fn CtxEntry::not_equal(Self, Self) -> Bool
+pub fn CtxEntry::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Subst {
+  Id
+  Shift(Int32)
+  Cons(SynExpr, Subst)
+  Lift(Int32, Subst)
+  Comp(Subst, Subst)
+}
+pub fn Subst::equal(Self, Self) -> Bool
+pub fn Subst::not_equal(Self, Self) -> Bool
+pub fn Subst::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct SynExpr {
+  kind : SynKind
+  occ_mask : UInt64
+  slot_mask : UInt64
+  max_free : Int32
+  size : Int32
+  hash64 : UInt64
+}
+pub fn SynExpr::depends_on_var0(Self) -> Bool
+pub fn SynExpr::equal(Self, Self) -> Bool
+pub fn SynExpr::has_free_var(Self, Int32) -> Bool
+pub fn SynExpr::is_closed(Self) -> Bool
+pub fn SynExpr::not_equal(Self, Self) -> Bool
+pub fn SynExpr::output(Self, &Logger) -> Unit
+pub fn SynExpr::to_repr(Self) -> @debug.Repr
+pub fn SynExpr::to_string(Self) -> String
+pub impl Show for SynExpr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum SynKind {
+  Var(Int32)
+  Hole(Int32)
+  Univ(Int32)
+  PolyUniv(Int32, Int32)
+  PropSort
+  SmallEncode(Int32, SynExpr)
+  SmallDecode(Int32, SynExpr)
+  Pi(String, SynExpr, SynExpr)
+  Lam(String, SynExpr, SynExpr)
+  App(SynExpr, SynExpr)
+  Sigma(String, SynExpr, SynExpr)
+  Pair(SynExpr, SynExpr, SynExpr)
+  Fst(SynExpr)
+  Snd(SynExpr)
+  UnitTy
+  UnitVal
+  EmptyTy
+  Absurd(SynExpr, SynExpr)
+  SumTy(SynExpr, SynExpr)
+  Inl(SynExpr, SynExpr)
+  Inr(SynExpr, SynExpr)
+  CaseSum(SynExpr, SynExpr, SynExpr, SynExpr)
+  NatTy
+  Zero
+  Succ(SynExpr)
+  NatRec(SynExpr, SynExpr, SynExpr, SynExpr)
+  IdTy(SynExpr, SynExpr, SynExpr)
+  Refl(SynExpr, SynExpr)
+  JElim(SynExpr, SynExpr, SynExpr, SynExpr, SynExpr, SynExpr)
+  SquashTy(SynExpr)
+  SquashIntro(SynExpr)
+  ConstRef(String, Array[Int32])
+}
+pub fn SynKind::equal(Self, Self) -> Bool
+pub fn SynKind::not_equal(Self, Self) -> Bool
+pub fn SynKind::to_repr(Self) -> @debug.Repr
+
+pub(all) struct SyntaxArena {
+  nodes : Array[SynExpr]
+  buckets : Map[UInt64, Array[Int32]]
+}
+pub fn SyntaxArena::get_node(Self, Int32) -> SynExpr
+pub fn SyntaxArena::intern(Self, SynExpr) -> Int32
+pub fn SyntaxArena::new() -> Self
+pub fn SyntaxArena::size(Self) -> Int32
+
+// Type aliases
+
+// Traits

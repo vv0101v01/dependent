@@ -1,0 +1,6 @@
+.moon/
+_build/
+target/
+uploads/
+*.mooncakes/
+.mooncakes/

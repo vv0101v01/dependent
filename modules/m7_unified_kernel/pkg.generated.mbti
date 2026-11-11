@@ -1,0 +1,99 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m7_unified_kernel"
+
+import {
+  "dtt/m1_syntax_context",
+  "dtt/m2_universe_cumul",
+  "dtt/m3_pi_sigma_types",
+  "dtt/m4_curry_howard_prop",
+  "dtt/m5_fibration_kan",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn analyze_telescope_exact_sequence(@m1_syntax_context.Context, Int32) -> TelescopeExactAnalysis
+
+pub fn compose_semidirect(SemidirectCtxElem, SemidirectCtxElem) -> SemidirectCtxElem raise KernelError
+
+pub fn semidirect_to_subst(SemidirectCtxElem) -> @m1_syntax_context.Subst
+
+pub fn synthesize_splitting_section(@m1_syntax_context.Context, Int32, Array[@m1_syntax_context.SynExpr]) -> @m5_fibration_kan.CtxMorphism raise
+
+pub fn verify_admissible_context_automorphism(@m1_syntax_context.Context, Array[Int32]) -> Bool raise KernelError
+
+// Errors
+pub(all) suberror KernelError {
+  UniverseInconsistency(String)
+  DeclarationLevelInsufficient(Int32, Int32)
+  InvalidPermutation(Int32)
+  DependencyViolatingSwap(Int32, Int32)
+  NonSplitExactSequence(Int32)
+}
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct CertifiedArtifact {
+  name : String
+  arena_type_id : Int32
+  arena_term_id : Int32
+  inferred_univ_level : Int32
+  normal_form : @m3_pi_sigma_types.CoreTm
+  extracted_witness : @m4_curry_howard_prop.ExtractedProg?
+}
+pub fn CertifiedArtifact::equal(Self, Self) -> Bool
+pub fn CertifiedArtifact::not_equal(Self, Self) -> Bool
+pub fn CertifiedArtifact::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct KernelTelemetry {
+  arena_unique_nodes : Int32
+  context_depth : Int32
+  universe_var_count : Int32
+  universe_longest_chain : Int32
+  universe_max_antichain : Int32
+  certified_artifacts : Int32
+  galois_law_verified : Bool
+  beck_chevalley_verified : Bool
+}
+pub fn KernelTelemetry::equal(Self, Self) -> Bool
+pub fn KernelTelemetry::not_equal(Self, Self) -> Bool
+pub fn KernelTelemetry::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct SemidirectCtxElem {
+  arity : Int32
+  perm : Array[Int32]
+  fiber_terms : Array[@m1_syntax_context.SynExpr]
+}
+pub fn SemidirectCtxElem::equal(Self, Self) -> Bool
+pub fn SemidirectCtxElem::not_equal(Self, Self) -> Bool
+pub fn SemidirectCtxElem::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct TelescopeExactAnalysis {
+  base_len : Int32
+  fiber_len : Int32
+  obstruction_rank : Int32
+  splits_directly : Bool
+  strengthened_fiber : Array[@m1_syntax_context.SynExpr]
+}
+pub fn TelescopeExactAnalysis::equal(Self, Self) -> Bool
+pub fn TelescopeExactAnalysis::not_equal(Self, Self) -> Bool
+pub fn TelescopeExactAnalysis::to_repr(Self) -> @debug.Repr
+
+pub struct UnifiedKernel {
+  arena : @m1_syntax_context.SyntaxArena
+  mut ctx : @m1_syntax_context.Context
+  ugraph : @m2_universe_cumul.UniverseGraph
+  mode : @m2_universe_cumul.HierarchyMode
+  artifacts : Array[CertifiedArtifact]
+}
+pub fn UnifiedKernel::assume_variable(Self, String, @m1_syntax_context.SynExpr) -> Int32 raise
+pub fn UnifiedKernel::certify_curry_howard_proof(Self, String, @m4_curry_howard_prop.CHTerm) -> CertifiedArtifact raise
+pub fn UnifiedKernel::certify_dtt_theorem(Self, String, @m1_syntax_context.SynExpr, @m1_syntax_context.SynExpr, Int32) -> CertifiedArtifact raise
+pub fn UnifiedKernel::collect_telemetry(Self) -> KernelTelemetry raise
+pub fn UnifiedKernel::new(@m2_universe_cumul.HierarchyMode) -> Self
+
+// Type aliases
+
+// Traits

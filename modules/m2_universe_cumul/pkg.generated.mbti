@@ -1,0 +1,139 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m2_universe_cumul"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn check_prop_elimination(Bool, Bool, Bool) -> Unit raise UniverseError
+
+pub fn fuss_derived_lift(AlgLevel, AlgLevel, FussCode) -> FussCode
+
+pub fn normalize_fuss_code(FussCode) -> FussCode
+
+pub fn normalize_fuss_type(FussType) -> FussType
+
+pub fn synthesize_least_smallness(FussType) -> AlgLevel
+
+// Errors
+pub suberror UniverseError {
+  NegativeConcreteLevel(Int32)
+  InvalidUniverseVar(Int32)
+  UniverseCycleDetected(Array[Int32])
+  NonCumulativeMismatch(AlgLevel, AlgLevel)
+  CumulativeEntailmentFailed(AlgLevel, AlgLevel)
+  LargeEliminationForbidden
+}
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct AlgLevel {
+  const_floor : Int32
+  var_offsets : Array[(Int32, Int32)]
+}
+pub fn AlgLevel::concrete(Int32) -> Self raise UniverseError
+pub fn AlgLevel::concrete_clamped(Int32) -> Self
+pub fn AlgLevel::equal(Self, Self) -> Bool
+pub fn AlgLevel::eval_with(Self, Array[Int32]) -> Int32
+pub fn AlgLevel::lub(Self, Self) -> Self
+pub fn AlgLevel::normalize(Int32, Array[(Int32, Int32)]) -> Self
+pub fn AlgLevel::not_equal(Self, Self) -> Bool
+pub fn AlgLevel::output(Self, &Logger) -> Unit
+pub fn AlgLevel::subst_var(Self, Int32, Self) -> Self
+pub fn AlgLevel::succ(Self) -> Self
+pub fn AlgLevel::to_repr(Self) -> @debug.Repr
+pub fn AlgLevel::to_string(Self) -> String
+pub fn AlgLevel::var_offset(Int32, Int32) -> Self raise UniverseError
+pub fn AlgLevel::zero() -> Self
+pub impl Show for AlgLevel
+
+#derive(Eq, @debug.Debug)
+pub(all) struct DiffEdge {
+  src : Int32
+  dst : Int32
+  weight : Int32
+}
+pub fn DiffEdge::equal(Self, Self) -> Bool
+pub fn DiffEdge::not_equal(Self, Self) -> Bool
+pub fn DiffEdge::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum FussCode {
+  FCVar(String, AlgLevel)
+  FCEncode(AlgLevel, FussType)
+}
+pub fn FussCode::equal(Self, Self) -> Bool
+pub fn FussCode::not_equal(Self, Self) -> Bool
+pub fn FussCode::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum FussType {
+  FTBase(AlgLevel)
+  FTProp
+  FTUniv(AlgLevel)
+  FTPi(FussType, FussType)
+  FTSigma(FussType, FussType)
+  FTSum(FussType, FussType)
+  FTId(FussType)
+  FTDecode(AlgLevel, FussCode)
+}
+pub fn FussType::equal(Self, Self) -> Bool
+pub fn FussType::not_equal(Self, Self) -> Bool
+pub fn FussType::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum HierarchyMode {
+  Cumulative
+  NonCumulative
+}
+pub fn HierarchyMode::equal(Self, Self) -> Bool
+pub fn HierarchyMode::not_equal(Self, Self) -> Bool
+pub fn HierarchyMode::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct PosetStratification {
+  max_strict_chain : Array[Int32]
+  antichain_layers : Array[Array[Int32]]
+  max_antichain_width : Int32
+  ramsey_bound_holds : Bool
+}
+pub fn PosetStratification::equal(Self, Self) -> Bool
+pub fn PosetStratification::not_equal(Self, Self) -> Bool
+pub fn PosetStratification::to_repr(Self) -> @debug.Repr
+
+pub(all) struct UniverseGraph {
+  mut num_vars : Int32
+  edges : Array[DiffEdge]
+  reach64 : FixedArray[UInt64]
+}
+pub fn UniverseGraph::add_alg_le_var(Self, AlgLevel, Int32) -> Unit raise UniverseError
+pub fn UniverseGraph::add_const_ceiling(Self, Int32, Int32) -> Unit raise UniverseError
+pub fn UniverseGraph::add_const_floor(Self, Int32, Int32) -> Unit raise UniverseError
+pub fn UniverseGraph::add_var_eq(Self, Int32, Int32) -> Unit raise UniverseError
+pub fn UniverseGraph::add_var_le(Self, Int32, Int32, Int32) -> Unit raise UniverseError
+pub fn UniverseGraph::check_level_rel(Self, HierarchyMode, Variance, AlgLevel, AlgLevel) -> Unit raise UniverseError
+pub fn UniverseGraph::eliminate_private_vars(Self, Array[Bool]) -> Self raise UniverseError
+pub fn UniverseGraph::entails_le(Self, AlgLevel, AlgLevel) -> Bool
+pub fn UniverseGraph::fast_le_vars(Self, Int32, Int32) -> Bool
+pub fn UniverseGraph::fresh_var(Self) -> Int32
+pub fn UniverseGraph::is_consistent(Self) -> Bool
+pub fn UniverseGraph::new(Int32) -> Self
+pub fn UniverseGraph::solve_minimal_valuation(Self) -> Array[Int32] raise UniverseError
+pub fn UniverseGraph::stratify_ramsey_dilworth(Self) -> PosetStratification raise UniverseError
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Variance {
+  Irrelevant
+  Covariant
+  Invariant
+}
+pub fn Variance::compose(Self, Self) -> Self
+pub fn Variance::equal(Self, Self) -> Bool
+pub fn Variance::join(Self, Self) -> Self
+pub fn Variance::not_equal(Self, Self) -> Bool
+pub fn Variance::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

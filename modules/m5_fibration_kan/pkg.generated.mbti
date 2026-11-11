@@ -1,0 +1,86 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m5_fibration_kan"
+
+import {
+  "dtt/m1_syntax_context",
+  "dtt/m2_universe_cumul",
+  "dtt/m3_pi_sigma_types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn build_context_pullback(Int32, @m1_syntax_context.Context, @m1_syntax_context.Context) -> ContextPullbackSquare raise FibrationError
+
+pub fn cartesian_reindex(CtxMorphism, FibredType) -> FibredType raise FibrationError
+
+pub fn compose_ctx_morphisms(CtxMorphism, CtxMorphism) -> CtxMorphism raise FibrationError
+
+pub fn core_to_syn(@m3_pi_sigma_types.CoreTm) -> @m1_syntax_context.SynExpr
+
+pub fn display_projection_morphism(@m1_syntax_context.Context, Int32) -> CtxMorphism raise FibrationError
+
+pub fn estimate_syn_smallness(@m1_syntax_context.SynExpr) -> @m2_universe_cumul.AlgLevel
+
+pub fn glue_compatible_local_terms(ContextPullbackSquare, @m1_syntax_context.Context, @m1_syntax_context.SynExpr, CtxMorphism, CtxMorphism, @m1_syntax_context.SynExpr, @m1_syntax_context.SynExpr) -> @m1_syntax_context.SynExpr raise
+
+pub fn graft_and_verify_fibered_operad(@m1_syntax_context.Context, @m1_syntax_context.SynExpr, Array[(Int32, @m1_syntax_context.SynExpr)], @m1_syntax_context.SynExpr, Bool) -> @m3_pi_sigma_types.CoreTm raise
+
+pub fn id_ctx_morphism(@m1_syntax_context.Context) -> CtxMorphism
+
+pub fn left_kan_sigma(Int32, FibredType) -> FibredType raise FibrationError
+
+pub fn morphism_to_subst(CtxMorphism) -> @m1_syntax_context.Subst raise FibrationError
+
+pub fn reflect_ctx_to_m3(@m1_syntax_context.Context, Bool) -> @m3_pi_sigma_types.JudgmentCtx raise
+
+pub fn right_kan_pi(Int32, FibredType) -> FibredType raise FibrationError
+
+pub fn syn_to_core(@m1_syntax_context.SynExpr) -> @m3_pi_sigma_types.CoreTm raise FibrationError
+
+pub fn verify_beck_chevalley(ContextPullbackSquare, FibredType) -> Bool raise
+
+// Errors
+pub suberror FibrationError {
+  BridgeUnsupportedConstruct(String)
+  InvalidMorphismArity(Int32, Int32)
+  InvalidExtensionSlice(Int32, Int32)
+  IncompatibleBaseContext(Int32, Int32)
+  SheafGluingRestrictionMismatch
+  BeckChevalleyFailure
+}
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct ContextPullbackSquare {
+  base_len : Int32
+  apex : @m1_syntax_context.Context
+  proj1 : CtxMorphism
+  proj2 : CtxMorphism
+}
+pub fn ContextPullbackSquare::equal(Self, Self) -> Bool
+pub fn ContextPullbackSquare::not_equal(Self, Self) -> Bool
+pub fn ContextPullbackSquare::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct CtxMorphism {
+  dom : @m1_syntax_context.Context
+  cod : @m1_syntax_context.Context
+  terms_by_lvl : Array[@m1_syntax_context.SynExpr]
+}
+pub fn CtxMorphism::equal(Self, Self) -> Bool
+pub fn CtxMorphism::not_equal(Self, Self) -> Bool
+pub fn CtxMorphism::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct FibredType {
+  base : @m1_syntax_context.Context
+  fiber_ty : @m1_syntax_context.SynExpr
+  smallness : @m2_universe_cumul.AlgLevel
+}
+pub fn FibredType::equal(Self, Self) -> Bool
+pub fn FibredType::not_equal(Self, Self) -> Bool
+pub fn FibredType::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits
