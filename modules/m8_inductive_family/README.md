@@ -55,4 +55,4 @@
 
 ### 輸出公共接口（Public API）
 - **類型與錯誤**：`ParamPolarity`, `SPTypeExpr`, `InductiveCtorDecl`, `InductiveDecl`, `CertifiedCtorSummary`, `CertifiedInductiveSummary`, `IRCode`, `IRNode`, `IRUni`, `IICtx`, `IITy`, `WTree`, `InductiveError`。
-- **核心函式**：`ParamPolarity::{join, negate_left_of_arrow}`, `CertifiedCtorSummary::is_leaf`, `check_strict_positivity`, `ir_decode_generic`, `ir_decode_with_root`, `ir_check_and_decode_card`, `ii_ty_ctx`, `check_ii_ctx`, `check_ii_ty`, `ii_elim_ctx`, `ii_elim_ty`, `cata_w`, `w_tree_height`。
+- **核心函式**：`ParamPolarity::{join, negate_left_of_arrow}`, `CertifiedCtorSummary::is_leaf`, `check_strict_positivity`, `ir_decode_with_root`, `ir_check_and_decode_card`, `ii_ty_ctx`, `check_ii_ctx`, `check_ii_ty`, `ii_elim_ctx`, `ii_elim_ty`, `cata_w`, `w_tree_height`。

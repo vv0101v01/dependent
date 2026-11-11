@@ -28,7 +28,8 @@ pub(all) enum CoreTm {
   CLam(String, CoreTm, CoreTm)
   CApp(CoreTm, CoreTm)
   CSigma(String, CoreTm, CoreTm)
-  CPair(CoreTm, CoreTm)
+  /// Annotated pair: the third field is the (possibly dependent) Sigma-motive binding var 0 = the pair.
+  CPair(CoreTm, CoreTm, CoreTm)
   CFst(CoreTm)
   CSnd(CoreTm)
   CUnit
@@ -38,11 +39,24 @@ pub(all) enum CoreTm {
   CSucc(CoreTm)
   CNatRec(CoreTm, CoreTm, CoreTm, CoreTm)
   CId(CoreTm, CoreTm, CoreTm)
-  CRefl(CoreTm)
+  CRefl(CoreTm, CoreTm)
   CJ(CoreTm, CoreTm, CoreTm, CoreTm, CoreTm, CoreTm)
   CSquash(CoreTm)
   CBoxProof(CoreTm)
   CAnn(CoreTm, CoreTm)
+  /// Polymorphic universe variable `U(u_v + o)` (kept losslessly for the M5 bridge).
+  CPolyUniv(Int32, Int32)
+  /// Boolean domain sort with canonical literals.
+  CBool
+  CBoolLit(Bool)
+  /// Binary sum (disjoint union) type and its canonical introductions / case elimination.
+  CSum(CoreTm, CoreTm)
+  CInl(CoreTm, CoreTm)
+  CInr(CoreTm, CoreTm)
+  CCase(CoreTm, CoreTm, CoreTm, CoreTm)
+  /// Empty type and ex-falso elimination.
+  CEmpty
+  CAbsurd(CoreTm, CoreTm)
 }
 
 ///|
@@ -92,7 +106,7 @@ pub impl Show for CoreTm with fn output(self, logger) {
       logger.write_string(").")
       Show::output(b, logger)
     }
-    CPair(a, b) => {
+    CPair(a, b, _) => {
       logger.write_string("<")
       Show::output(a, logger)
       logger.write_string(", ")
@@ -136,7 +150,7 @@ pub impl Show for CoreTm with fn output(self, logger) {
       Show::output(r, logger)
       logger.write_string(")")
     }
-    CRefl(x) => {
+    CRefl(_, x) => {
       logger.write_string("refl(")
       Show::output(x, logger)
       logger.write_string(")")
@@ -165,6 +179,46 @@ pub impl Show for CoreTm with fn output(self, logger) {
       Show::output(t, logger)
       logger.write_string(")")
     }
+    CPolyUniv(v, o) => logger.write_string("U(u\{v}+\{o})")
+    CBool => logger.write_string("Bool")
+    CBoolLit(true) => logger.write_string("true")
+    CBoolLit(false) => logger.write_string("false")
+    CSum(a, b) => {
+      logger.write_string("(")
+      Show::output(a, logger)
+      logger.write_string(" + ")
+      Show::output(b, logger)
+      logger.write_string(")")
+    }
+    CInl(t, v) => {
+      logger.write_string("inl[")
+      Show::output(t, logger)
+      logger.write_string("](")
+      Show::output(v, logger)
+      logger.write_string(")")
+    }
+    CInr(t, v) => {
+      logger.write_string("inr[")
+      Show::output(t, logger)
+      logger.write_string("](")
+      Show::output(v, logger)
+      logger.write_string(")")
+    }
+    CCase(s, _, l, r) => {
+      logger.write_string("case(")
+      Show::output(s, logger)
+      logger.write_string("; ")
+      Show::output(l, logger)
+      logger.write_string("; ")
+      Show::output(r, logger)
+      logger.write_string(")")
+    }
+    CEmpty => logger.write_string("Empty")
+    CAbsurd(_, c) => {
+      logger.write_string("absurd(")
+      Show::output(c, logger)
+      logger.write_string(")")
+    }
   }
 }
 
@@ -179,7 +233,16 @@ pub fn shift_core(tm : CoreTm, delta : Int32, cutoff : Int32) -> CoreTm {
   }
   match tm {
     CVar(i) => if i >= cutoff { CVar(i + delta) } else { tm }
-    CUniv(_) | CProp | CUnit | CStar | CNat | CZero => tm
+    CUniv(_)
+    | CProp
+    | CUnit
+    | CStar
+    | CNat
+    | CZero
+    | CBool
+    | CBoolLit(_)
+    | CEmpty
+    | CPolyUniv(_, _) => tm
     CSmallEnc(l, a) => CSmallEnc(l, shift_core(a, delta, cutoff))
     CSmallDec(l, m) => CSmallDec(l, shift_core(m, delta, cutoff))
     CPi(x, a, b) =>
@@ -190,8 +253,12 @@ pub fn shift_core(tm : CoreTm, delta : Int32, cutoff : Int32) -> CoreTm {
       CApp(shift_core(f, delta, cutoff), shift_core(a, delta, cutoff))
     CSigma(x, a, b) =>
       CSigma(x, shift_core(a, delta, cutoff), shift_core(b, delta, cutoff + 1))
-    CPair(a, b) =>
-      CPair(shift_core(a, delta, cutoff), shift_core(b, delta, cutoff))
+    CPair(a, b, m) =>
+      CPair(
+        shift_core(a, delta, cutoff),
+        shift_core(b, delta, cutoff),
+        shift_core(m, delta, cutoff + 1),
+      )
     CFst(p) => CFst(shift_core(p, delta, cutoff))
     CSnd(p) => CSnd(shift_core(p, delta, cutoff))
     CSucc(n) => CSucc(shift_core(n, delta, cutoff))
@@ -208,7 +275,8 @@ pub fn shift_core(tm : CoreTm, delta : Int32, cutoff : Int32) -> CoreTm {
         shift_core(l, delta, cutoff),
         shift_core(r, delta, cutoff),
       )
-    CRefl(x) => CRefl(shift_core(x, delta, cutoff))
+    CRefl(t, x) =>
+      CRefl(shift_core(t, delta, cutoff), shift_core(x, delta, cutoff))
     CJ(t, l, m, rf, r, p) =>
       CJ(
         shift_core(t, delta, cutoff),
@@ -222,6 +290,21 @@ pub fn shift_core(tm : CoreTm, delta : Int32, cutoff : Int32) -> CoreTm {
     CBoxProof(a) => CBoxProof(shift_core(a, delta, cutoff))
     CAnn(e, t) =>
       CAnn(shift_core(e, delta, cutoff), shift_core(t, delta, cutoff))
+    CSum(a, b) =>
+      CSum(shift_core(a, delta, cutoff), shift_core(b, delta, cutoff))
+    CInl(t, v) =>
+      CInl(shift_core(t, delta, cutoff), shift_core(v, delta, cutoff))
+    CInr(t, v) =>
+      CInr(shift_core(t, delta, cutoff), shift_core(v, delta, cutoff))
+    CCase(s, m, l, r) =>
+      CCase(
+        shift_core(s, delta, cutoff),
+        shift_core(m, delta, cutoff + 1),
+        shift_core(l, delta, cutoff + 1),
+        shift_core(r, delta, cutoff + 1),
+      )
+    CAbsurd(t, c) =>
+      CAbsurd(shift_core(t, delta, cutoff), shift_core(c, delta, cutoff))
   }
 }
 
@@ -245,6 +328,7 @@ pub(all) enum SpineElim {
   SESmallDec(Int32)
   SENatRec(Clos, Val, Clos)
   SEJ(Val, Val, Clos, Val, Val)
+  SECase(Val, Clos, Clos, Clos)
 }
 
 ///|
@@ -277,9 +361,18 @@ pub(all) enum Val {
   VZero
   VSucc(Val)
   VId(Val, Val, Val)
-  VRefl(Val)
+  VRefl(Val, Val)
   VSquash(Val)
   VBoxProof(Val)
+  VPolyUniv(Int32, Int32)
+  VBool
+  VBoolLit(Bool)
+  VSum(Val, Val)
+  /// Sum introductions carry the whole sum type so stuck `case` spines stay type-directed.
+  VInl(Val, Val)
+  VInr(Val, Val)
+  VEmpty
+  VAbsurd(Val, Val)
 }
 
 ///|
@@ -412,7 +505,7 @@ pub fn j_elim_val(
   eq_proof : Val,
 ) -> Val {
   match eq_proof {
-    VRefl(_) => refl_case
+    VRefl(_, _) => refl_case
     VNeu(_, ne) => {
       let res_ty = eval_clos2(motive, rhs, eq_proof)
       let next_spine = ne.spine.copy()
@@ -420,6 +513,22 @@ pub fn j_elim_val(
       VNeu(res_ty, { head_lvl: ne.head_lvl, spine: next_spine, })
     }
     _ => refl_case
+  }
+}
+
+///|
+/// Local Axiom (Logical Elimination for Sums): dependent case analysis `case(s, l, r)`.
+pub fn case_val(mot : Clos, on_l : Clos, on_r : Clos, s_val : Val) -> Val {
+  match s_val {
+    VInl(_, v) => eval_clos(on_l, v)
+    VInr(_, v) => eval_clos(on_r, v)
+    VNeu(vty, ne) => {
+      let res_ty = eval_clos(mot, s_val)
+      let next_spine = ne.spine.copy()
+      next_spine.push(SECase(vty, mot, on_l, on_r))
+      VNeu(res_ty, { head_lvl: ne.head_lvl, spine: next_spine, })
+    }
+    _ => eval_clos(mot, s_val)
   }
 }
 
@@ -467,7 +576,7 @@ pub fn eval_tm(env : Array[Val], tm : CoreTm) -> Val {
     CApp(f, a) => apply_val(eval_tm(env, f), eval_tm(env, a))
     CSigma(x, fst_t, snd_t) =>
       VSigma(x, eval_tm(env, fst_t), { env: env.copy(), body: snd_t, })
-    CPair(a, b) => VPair(eval_tm(env, a), eval_tm(env, b))
+    CPair(a, b, _) => VPair(eval_tm(env, a), eval_tm(env, b))
     CFst(p) => fst_val(eval_tm(env, p))
     CSnd(p) => snd_val(eval_tm(env, p))
     CUnit => VUnit
@@ -483,7 +592,7 @@ pub fn eval_tm(env : Array[Val], tm : CoreTm) -> Val {
         eval_tm(env, target),
       )
     CId(t, l, r) => VId(eval_tm(env, t), eval_tm(env, l), eval_tm(env, r))
-    CRefl(x) => VRefl(eval_tm(env, x))
+    CRefl(t, x) => VRefl(eval_tm(env, t), eval_tm(env, x))
     CJ(t, l, m, rf, r, p) =>
       j_elim_val(
         eval_tm(env, t),
@@ -496,6 +605,21 @@ pub fn eval_tm(env : Array[Val], tm : CoreTm) -> Val {
     CSquash(a) => VSquash(eval_tm(env, a))
     CBoxProof(p) => VBoxProof(eval_tm(env, p))
     CAnn(e, _) => eval_tm(env, e)
+    CPolyUniv(v, o) => VPolyUniv(v, o)
+    CBool => VBool
+    CBoolLit(b) => VBoolLit(b)
+    CSum(a, b) => VSum(eval_tm(env, a), eval_tm(env, b))
+    CInl(t, v) => VInl(eval_tm(env, t), eval_tm(env, v))
+    CInr(t, v) => VInr(eval_tm(env, t), eval_tm(env, v))
+    CCase(s, m, l, r) =>
+      case_val(
+        { env: env.copy(), body: m, },
+        { env: env.copy(), body: l, },
+        { env: env.copy(), body: r, },
+        eval_tm(env, s),
+      )
+    CEmpty => VEmpty
+    CAbsurd(t, c) => VAbsurd(eval_tm(env, t), eval_tm(env, c))
   }
 }
 
@@ -522,6 +646,10 @@ pub fn quote_ty(depth : Int32, vty : Val) -> CoreTm {
     VId(t, l, r) =>
       CId(quote_ty(depth, t), quote_val(depth, t, l), quote_val(depth, t, r))
     VSquash(a) => CSquash(quote_ty(depth, a))
+    VSum(a, b) => CSum(quote_ty(depth, a), quote_ty(depth, b))
+    VBool => CBool
+    VEmpty => CEmpty
+    VPolyUniv(v, o) => CPolyUniv(v, o)
     VNeu(_, ne) => quote_neutral(depth, ne)
     other => quote_untyped(depth, other)
   }
@@ -545,12 +673,37 @@ pub fn quote_val(depth : Int32, vty : Val, v : Val) -> CoreTm {
       CLam(x, q_dom, quote_val(depth + 1, body_ty, body_val))
     }
     // Σ η-law (Surjective Pairing): read back `p` at `Sigma(x:A).B` as `<fst(p), snd(p)>`
-    VSigma(_, fst_t, snd_clos) => {
+    // with the TRUE pair motive annotation `shift(Sigma(x:A).B, 1, 0)` binding var 0 = the pair.
+    VSigma(nm, fst_t, snd_clos) => {
       let p1 = fst_val(v)
       let p2 = snd_val(v)
       let snd_t = eval_clos(snd_clos, p1)
-      CPair(quote_val(depth, fst_t, p1), quote_val(depth, snd_t, p2))
+      let sig_val : Val = VSigma(nm, fst_t, snd_clos)
+      CPair(
+        quote_val(depth, fst_t, p1),
+        quote_val(depth, snd_t, p2),
+        shift_core(quote_ty(depth, sig_val), 1, 0),
+      )
     }
+    VSum(lty, rty) =>
+      match v {
+        VInl(_, x) =>
+          CInl(
+            CSum(quote_ty(depth, lty), quote_ty(depth, rty)),
+            quote_val(depth, lty, x),
+          )
+        VInr(_, x) =>
+          CInr(
+            CSum(quote_ty(depth, lty), quote_ty(depth, rty)),
+            quote_val(depth, rty, x),
+          )
+        _ => quote_untyped(depth, v)
+      }
+    VBool =>
+      match v {
+        VBoolLit(b) => CBoolLit(b)
+        _ => quote_untyped(depth, v)
+      }
     VUniv(l) =>
       match v {
         VSmallEnc(_, inner_ty) => CSmallEnc(l, quote_ty(depth, inner_ty))
@@ -570,18 +723,26 @@ fn quote_untyped(depth : Int32, v : Val) -> CoreTm {
     VSmallEnc(l, inner) => CSmallEnc(l, quote_ty(depth, inner))
     VPi(_, _, _) | VSigma(_, _, _) | VId(_, _, _) | VSquash(_) =>
       quote_ty(depth, v)
+    VSum(_, _) | VBool | VEmpty | VPolyUniv(_, _) => quote_ty(depth, v)
+    VBoolLit(b) => CBoolLit(b)
+    VInl(sty, v_) => CInl(quote_ty(depth, sty), quote_untyped(depth, v_))
+    VInr(sty, v_) => CInr(quote_ty(depth, sty), quote_untyped(depth, v_))
+    VAbsurd(t, c) => CAbsurd(quote_ty(depth, t), quote_untyped(depth, c))
     VLam(x, dom, clos) => {
       let q_dom = quote_ty(depth, dom)
       let v_var = fresh_neutral_var(depth, dom)
       CLam(x, q_dom, quote_untyped(depth + 1, eval_clos(clos, v_var)))
     }
-    VPair(a, b) => CPair(quote_untyped(depth, a), quote_untyped(depth, b))
+    // Untyped readback has no type information: emit a placeholder motive annotation
+    // (typed readback `quote_val` at `VSigma` reconstructs the true motive).
+    VPair(a, b) =>
+      CPair(quote_untyped(depth, a), quote_untyped(depth, b), CUnit)
     VUnit => CUnit
     VStar => CStar
     VNat => CNat
     VZero => CZero
     VSucc(n) => CSucc(quote_untyped(depth, n))
-    VRefl(x) => CRefl(quote_untyped(depth, x))
+    VRefl(t, x) => CRefl(quote_ty(depth, t), quote_untyped(depth, x))
     VBoxProof(_) => CBoxProof(CStar)
   }
 }
@@ -619,10 +780,37 @@ fn quote_neutral(depth : Int32, ne : Neutral) -> CoreTm {
         let y_var = fresh_neutral_var(depth, ty)
         let p_var = fresh_neutral_var(depth + 1, VId(ty, lhs, y_var))
         let q_mot = quote_ty(depth + 2, eval_clos2(mot, y_var, p_var))
-        let rf_ty = eval_clos2(mot, lhs, VRefl(lhs))
+        let rf_ty = eval_clos2(mot, lhs, VRefl(ty, lhs))
         let q_rf = quote_val(depth, rf_ty, rf)
         let q_rhs = quote_val(depth, ty, rhs)
         acc = CJ(q_ty, q_lhs, q_mot, q_rf, q_rhs, acc)
+      }
+      SECase(s_ty, mot, on_l, on_r) => {
+        let s_var = fresh_neutral_var(depth, s_ty)
+        let q_mot = quote_ty(depth + 1, eval_clos(mot, s_var))
+        let (q_l, q_r) = match s_ty {
+          VSum(lt, rt) => {
+            let l_var = fresh_neutral_var(depth, lt)
+            let r_var = fresh_neutral_var(depth, rt)
+            let q_l = quote_val(
+              depth + 1,
+              eval_clos(mot, VInl(s_ty, l_var)),
+              eval_clos(on_l, l_var),
+            )
+            let q_r = quote_val(
+              depth + 1,
+              eval_clos(mot, VInr(s_ty, r_var)),
+              eval_clos(on_r, r_var),
+            )
+            (q_l, q_r)
+          }
+          _ => {
+            let q_l = quote_untyped(depth + 1, eval_clos(on_l, s_var))
+            let q_r = quote_untyped(depth + 1, eval_clos(on_r, s_var))
+            (q_l, q_r)
+          }
+        }
+        acc = CCase(acc, q_mot, q_l, q_r)
       }
     }
   }

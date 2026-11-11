@@ -572,9 +572,12 @@ pub fn UniverseGraph::eliminate_private_vars(
 
 ///|
 /// Ramsey-Dilworth Universe Poset Stratification Result:
-/// By Mirsky's Dual Dilworth Theorem & Poset Ramsey Theory, on `N` universe variables:
+/// By Dilworth's Theorem, König's Theorem & Poset Ramsey Theory, on `N` universe variables:
 /// - `max_strict_chain`: longest strictly increasing universe chain `u_{i_1} < u_{i_2} < ... < u_{i_h}`
-/// - `antichain_layers`: canonical partition into `h` pairwise-incomparable universe antichains
+///   (whose length equals the number of Mirsky layers by Mirsky's Dual Dilworth Theorem)
+/// - `antichain_layers`: canonical Mirsky partition into `h` pairwise-incomparable universe antichains
+/// - `max_antichain_width`: the EXACT maximum antichain width `w` (Dilworth), computed as
+///   `N - max_bipartite_matching` on the comparability bipartite graph (König's Theorem)!
 /// - `ramsey_guarantee_holds`: verifies `max_strict_chain.length() * max_antichain_width >= num_vars`
 ///   (Erdős-Szekeres / Ramsey comparable-vs-incomparable bound!).
 #derive(Eq, Debug)
@@ -669,17 +672,38 @@ pub fn UniverseGraph::stratify_ramsey_dilworth(
     let layer_idx = max_h - memo_len[u]
     layers[layer_idx].push(u)
   }
-  let mut max_w = 0
-  for layer in layers {
-    if layer.length() > max_w {
-      max_w = layer.length()
+  // Dilworth / König: the EXACT maximum antichain width equals `n - maximum matching`
+  // on the bipartite graph `L = V`, `R = V`, `u ~ v <=> u < v` (transitively closed above).
+  let match_r : Array[Int32] = Array::make(n, -1)
+  fn augment(u : Int32, vis : Array[Bool]) -> Bool {
+    for v = 0; v < n; v = v + 1 {
+      if strict_lt[u][v] && !vis[v] {
+        vis[v] = true
+        let m = match_r[v]
+        if m == -1 || augment(m, vis) {
+          match_r[v] = u
+          return true
+        }
+      }
+    }
+    false
+  }
+
+  let mut matching = 0
+  for u = 0; u < n; u = u + 1 {
+    let vis : Array[Bool] = Array::make(n, false)
+    if augment(u, vis) {
+      matching = matching + 1
     }
   }
-  let ramsey_ok = chain.length() * max_w >= n
+  // Invariant (theorem): the exact width always dominates every Mirsky layer size,
+  // since each Mirsky layer is itself an antichain.
+  let exact_width = n - matching
+  let ramsey_ok = chain.length() * exact_width >= n
   {
     max_strict_chain: chain,
     antichain_layers: layers,
-    max_antichain_width: max_w,
+    max_antichain_width: exact_width,
     ramsey_bound_holds: ramsey_ok,
   }
 }

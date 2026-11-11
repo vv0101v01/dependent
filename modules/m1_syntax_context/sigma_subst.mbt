@@ -153,6 +153,8 @@ fn apply_subst_rec(e : SynExpr, s : Subst) -> SynExpr {
     | EmptyTy
     | NatTy
     | Zero
+    | BoolTy
+    | BoolLit(_)
     | ConstRef(_, _) => e
     SmallEncode(l, a) => mk_small_encode(l, apply_subst(a, s))
     SmallDecode(l, a) => mk_small_decode(l, apply_subst(a, s))

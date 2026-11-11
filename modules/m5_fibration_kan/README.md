@@ -6,7 +6,7 @@
 
 ## 一、資料夾內已獲得之公理、定義、命題、引理與定理列表
 
-1. **定義 M5.D1（雙向函子橋接 $\mathsf{SynExpr} \leftrightarrows \mathsf{CoreTm}$）**：將 M1 具備 $O(1)$ 位元摘要之語法樹與 M3 語義 NbE 核心項互譯，並將結構化伸縮語境 `Context` 反射為語義 `JudgmentCtx`。
+1. **定義 M5.D1（無損雙向函子橋接 $\mathsf{SynExpr} \leftrightarrows \mathsf{CoreTm}$）**：將 M1 具備 $O(1)$ 位元摘要之語法樹與 M3 語義 NbE 核心項互譯，並將結構化伸縮語境 `Context` 反射為語義 `JudgmentCtx`。橋接為**完全且無損**：多態宇宙變數 `PolyUniv(v, o) \leftrightarrow CPolyUniv(v, o)`（語義不丟失）、和類型與 case 消元、空類型與 ex-falso、布林排序、帶動機配對 `Pair(a, b, m) \leftrightarrow CPair(a, b, m)` 與帶類型註記 `Refl(t, x) \leftrightarrow CRefl(t, x)` 嚴格往返恆等；語境反射對局部定義 `x : A := v` 注入定義值（zeta-透明反射）。
 2. **定理 M5.T1（Grothendieck 劈裂笛卡兒提升函子性定理）**：語境態射複合 `compose_ctx_morphisms(f, g)` 與劈裂重索引 `cartesian_reindex` 嚴格滿足 $(g \circ f)^*(A) = f^*(g^*(A))$ 及 $\mathsf{id}_\Gamma^*(A) = A$，且保持 M2 代數宇宙小性階。
 3. **定理 M5.T2（左右 Kan 擴張伴隨實現定理）**：沿 $r$ 步顯示投影態射 $\pi_r : (\Gamma, \Delta_r) \to \Gamma$，左 Kan 擴張 $\mathsf{Lan}_{\pi_r}$ 由迭代 $\Sigma$-類型精確實現，右 Kan 擴張 $\mathsf{Ran}_{\pi_r}$ 由迭代 $\Pi$-類型精確實現，小性階滿足最小上界封閉 $\bigsqcup_{k=1}^r \ell(D_k) \sqcup \ell(A)$。
 4. **定理 M5.T3（語境拉回／理論融合推出對偶與 Beck-Chevalley 自然同構定理）**：對共享基底 $\Gamma_0$ 之語境擴張 $\Gamma_1 = (\Gamma_0, \Delta_1)$ 與 $\Gamma_2 = (\Gamma_0, \Delta_2)$，`build_context_pullback` 構造 $\mathcal{C}\text{tx}$ 中之纖維積 $\Gamma_1 \times_{\Gamma_0} \Gamma_2$（即對偶範疇 $\mathcal{C}\text{tx}^{\mathrm{op}}$ 中語法理論之融合推出 $\Gamma_1 \sqcup_{\Gamma_0} \Gamma_2$），且左右 Kan 擴張皆滿足嚴格 NbE $\beta\eta$-定義同構：

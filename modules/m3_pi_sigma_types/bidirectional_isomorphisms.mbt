@@ -41,6 +41,25 @@ pub fn JudgmentCtx::push_var(
 }
 
 ///|
+/// Context reflection of a local let-definition `↑(Γ, x : A := v)`:
+/// the DEFINITION VALUE `v` (already checked against `A`) is pushed into the semantic
+/// environment, so every later reference to `x` zeta-expands to `v` during NbE.
+pub fn JudgmentCtx::push_def(
+  self : JudgmentCtx,
+  name : String,
+  vty : Val,
+  vval : Val,
+) -> JudgmentCtx {
+  let names = self.names.copy()
+  let types = self.types.copy()
+  let env = self.env.copy()
+  names.push(name)
+  types.push(vty)
+  env.push(vval)
+  { names, types, env, allow_cumul: self.allow_cumul, }
+}
+
+///|
 /// Normalize a well-typed term `tm` of syntactic type `ty` in `ctx` to its βη-canonical `CoreTm`.
 pub fn JudgmentCtx::normalize(
   self : JudgmentCtx,
@@ -97,6 +116,15 @@ pub fn check_is_type(
       let _ = check_is_type(ctx, a_tm)
       (eval_tm(ctx.env, ty_expr), 0)
     }
+    CSum(a_tm, b_tm) => {
+      let (v_a, l_a) = check_is_type(ctx, a_tm)
+      let (_, l_b) = check_is_type(ctx, b_tm)
+      let lub = if l_a >= l_b { l_a } else { l_b }
+      (VSum(v_a, eval_tm(ctx.env, b_tm)), lub)
+    }
+    CBool => (VBool, 0)
+    CEmpty => (VEmpty, 0)
+    CPolyUniv(v, o) => (VPolyUniv(v, o), o + 1)
     other => {
       // Allow terms inhabiting U_i or Prop to act Russell-style when decoded implicitly
       let inf_ty = synth_term(ctx, other)
@@ -171,6 +199,69 @@ pub fn synth_term(ctx : JudgmentCtx, tm : CoreTm) -> Val raise TypeTheoryError {
     CSmallDec(lvl, m_tm) => {
       check_term(ctx, m_tm, VUniv(lvl))
       VUniv(lvl + 1)
+    }
+    CPolyUniv(_, o) => VUniv(o + 1)
+    CBool => VUniv(0)
+    CBoolLit(_) => VBool
+    CEmpty => VUniv(0)
+    CSum(a_tm, b_tm) => {
+      let (_, l_a) = check_is_type(ctx, a_tm)
+      let (_, l_b) = check_is_type(ctx, b_tm)
+      let lub = if l_a >= l_b { l_a } else { l_b }
+      VUniv(lub)
+    }
+    CInl(sty_tm, v_tm) => {
+      let (vs, _) = check_is_type(ctx, sty_tm)
+      match vs {
+        VSum(va, _) => {
+          check_term(ctx, v_tm, va)
+          vs
+        }
+        other =>
+          raise TypeTheoryError::ExpectedTypeForm(
+            "\{quote_ty(ctx.depth(), other)}",
+          )
+      }
+    }
+    CInr(sty_tm, v_tm) => {
+      let (vs, _) = check_is_type(ctx, sty_tm)
+      match vs {
+        VSum(_, vb) => {
+          check_term(ctx, v_tm, vb)
+          vs
+        }
+        other =>
+          raise TypeTheoryError::ExpectedTypeForm(
+            "\{quote_ty(ctx.depth(), other)}",
+          )
+      }
+    }
+    CCase(s_tm, mot_tm, l_tm, r_tm) => {
+      let s_ty = synth_term(ctx, s_tm)
+      match s_ty {
+        VSum(lty, rty) => {
+          let ext_m = ctx.push_var("s", s_ty)
+          let _ = check_is_type(ext_m, mot_tm)
+          let mot_clos : Clos = { env: ctx.env.copy(), body: mot_tm, }
+          let v_s = eval_tm(ctx.env, s_tm)
+          let ext_l = ctx.push_var("l", lty)
+          let l_var = fresh_neutral_var(ctx.depth(), lty)
+          check_term(ext_l, l_tm, eval_clos(mot_clos, VInl(s_ty, l_var)))
+          let ext_r = ctx.push_var("r", rty)
+          let r_var = fresh_neutral_var(ctx.depth(), rty)
+          check_term(ext_r, r_tm, eval_clos(mot_clos, VInr(s_ty, r_var)))
+          eval_clos(mot_clos, v_s)
+        }
+        other =>
+          raise TypeTheoryError::ExpectedTypeForm(
+            "\{quote_ty(ctx.depth(), other)}",
+          )
+      }
+    }
+    CAbsurd(t_tm, c_tm) => {
+      let (vt, _) = check_is_type(ctx, t_tm)
+      check_term(ctx, c_tm, VEmpty)
+      vt
     }
     CPi(x, dom_tm, cod_tm) => {
       let (v_dom, l_dom) = check_is_type(ctx, dom_tm)
@@ -257,7 +348,7 @@ pub fn synth_term(ctx : JudgmentCtx, tm : CoreTm) -> Val raise TypeTheoryError {
       let ext_p = ext_y.push_var("p", VId(v_a, v_lhs, y_var))
       let _ = check_is_type(ext_p, mot_tm)
       let mot_clos : Clos = { env: ctx.env.copy(), body: mot_tm, }
-      check_term(ctx, rf_tm, eval_clos2(mot_clos, v_lhs, VRefl(v_lhs)))
+      check_term(ctx, rf_tm, eval_clos2(mot_clos, v_lhs, VRefl(v_a, v_lhs)))
       check_term(ctx, rhs_tm, v_a)
       let v_rhs = eval_tm(ctx.env, rhs_tm)
       check_term(ctx, eq_tm, VId(v_a, v_lhs, v_rhs))
@@ -277,13 +368,15 @@ pub fn synth_term(ctx : JudgmentCtx, tm : CoreTm) -> Val raise TypeTheoryError {
       check_term(ctx, e_tm, v_ty)
       v_ty
     }
-    CPair(a_tm, b_tm) => {
+    // The pair motive annotation is a syntactic annotation (like `CAnn`) and is
+    // deliberately ignored during synthesis; the codomain is derived from the components.
+    CPair(a_tm, b_tm, _) => {
       let va = synth_term(ctx, a_tm)
       let vb = synth_term(ctx, b_tm)
       let qb_weaken = shift_core(quote_ty(ctx.depth(), vb), 1, 0)
       VSigma("_", va, { env: ctx.env.copy(), body: qb_weaken, })
     }
-    CRefl(_) => raise TypeTheoryError::CannotSynthesizeUnannotated("CRefl")
+    CRefl(_, _) => raise TypeTheoryError::CannotSynthesizeUnannotated("CRefl")
   }
 }
 
@@ -302,12 +395,12 @@ pub fn check_term(
       let arg_var = fresh_neutral_var(ctx.depth(), exp_dom)
       check_term(ext, body_tm, eval_clos(cod_clos, arg_var))
     }
-    (CPair(fst_tm, snd_tm), VSigma(_, fst_ty, snd_clos)) => {
+    (CPair(fst_tm, snd_tm, _), VSigma(_, fst_ty, snd_clos)) => {
       check_term(ctx, fst_tm, fst_ty)
       let v_fst = eval_tm(ctx.env, fst_tm)
       check_term(ctx, snd_tm, eval_clos(snd_clos, v_fst))
     }
-    (CRefl(x_tm), VId(ty, lhs, rhs)) => {
+    (CRefl(_, x_tm), VId(ty, lhs, rhs)) => {
       check_term(ctx, x_tm, ty)
       let vx = eval_tm(ctx.env, x_tm)
       if !conv_val(ctx.depth(), ty, vx, lhs) {
@@ -342,7 +435,16 @@ fn subst_at_core(tm : CoreTm, target : Int32, arg : CoreTm) -> CoreTm {
       } else {
         tm
       }
-    CUniv(_) | CProp | CUnit | CStar | CNat | CZero => tm
+    CUniv(_)
+    | CProp
+    | CUnit
+    | CStar
+    | CNat
+    | CZero
+    | CBool
+    | CBoolLit(_)
+    | CEmpty
+    | CPolyUniv(_, _) => tm
     CSmallEnc(l, a) => CSmallEnc(l, subst_at_core(a, target, arg))
     CSmallDec(l, m) => CSmallDec(l, subst_at_core(m, target, arg))
     CPi(x, a, b) =>
@@ -357,8 +459,12 @@ fn subst_at_core(tm : CoreTm, target : Int32, arg : CoreTm) -> CoreTm {
         subst_at_core(a, target, arg),
         subst_at_core(b, target + 1, arg),
       )
-    CPair(a, b) =>
-      CPair(subst_at_core(a, target, arg), subst_at_core(b, target, arg))
+    CPair(a, b, m) =>
+      CPair(
+        subst_at_core(a, target, arg),
+        subst_at_core(b, target, arg),
+        subst_at_core(m, target + 1, arg),
+      )
     CFst(p) => CFst(subst_at_core(p, target, arg))
     CSnd(p) => CSnd(subst_at_core(p, target, arg))
     CSucc(n) => CSucc(subst_at_core(n, target, arg))
@@ -375,7 +481,8 @@ fn subst_at_core(tm : CoreTm, target : Int32, arg : CoreTm) -> CoreTm {
         subst_at_core(l, target, arg),
         subst_at_core(r, target, arg),
       )
-    CRefl(x) => CRefl(subst_at_core(x, target, arg))
+    CRefl(t, x) =>
+      CRefl(subst_at_core(t, target, arg), subst_at_core(x, target, arg))
     CJ(t, l, m, rf, r, p) =>
       CJ(
         subst_at_core(t, target, arg),
@@ -389,6 +496,21 @@ fn subst_at_core(tm : CoreTm, target : Int32, arg : CoreTm) -> CoreTm {
     CBoxProof(a) => CBoxProof(subst_at_core(a, target, arg))
     CAnn(e, t) =>
       CAnn(subst_at_core(e, target, arg), subst_at_core(t, target, arg))
+    CSum(a, b) =>
+      CSum(subst_at_core(a, target, arg), subst_at_core(b, target, arg))
+    CInl(t, v) =>
+      CInl(subst_at_core(t, target, arg), subst_at_core(v, target, arg))
+    CInr(t, v) =>
+      CInr(subst_at_core(t, target, arg), subst_at_core(v, target, arg))
+    CCase(s, m, l, r) =>
+      CCase(
+        subst_at_core(s, target, arg),
+        subst_at_core(m, target + 1, arg),
+        subst_at_core(l, target + 1, arg),
+        subst_at_core(r, target + 1, arg),
+      )
+    CAbsurd(t, c) =>
+      CAbsurd(subst_at_core(t, target, arg), subst_at_core(c, target, arg))
   }
 }
 
@@ -405,7 +527,11 @@ pub fn dep_curried_type(a : CoreTm, b : CoreTm, c_over_p : CoreTm) -> CoreTm {
   // Inside `x : A, y : B(x)`: `x` is `#1`, `y` is `#0`.
   // Shift `c_over_p` outer vars by +2 (cutoff 1), then replace `p` (`#0`) by `<#1, #0>`:
   let c_weaken = shift_core(c_over_p, 2, 1)
-  let c_xy = subst0_core(c_weaken, CPair(CVar(1), CVar(0)))
+  // The pair `<#1, #0>` has type `Sigma(x:A).B(x)` living in ctx `[y, x | Γ]`
+  // (free vars of `a`, `b` shifted by +2), and the pair motive binds var 0 = the pair (+1):
+  let pair_ty = CSigma("x", a, b)
+  let pair_motive = shift_core(pair_ty, 3, 0)
+  let c_xy = subst0_core(c_weaken, CPair(CVar(1), CVar(0), pair_motive))
   CPi("x", a, CPi("y", b, c_xy))
 }
 
@@ -413,7 +539,12 @@ pub fn dep_curried_type(a : CoreTm, b : CoreTm, c_over_p : CoreTm) -> CoreTm {
 /// Forward Dependent Currying Transformer: `f ↦ λ(x:A). λ(y:B(x)). f <x, y>`.
 pub fn dep_curry_term(a : CoreTm, b : CoreTm, f_tm : CoreTm) -> CoreTm {
   let f_shifted = shift_core(f_tm, 2, 0)
-  CLam("x", a, CLam("y", b, CApp(f_shifted, CPair(CVar(1), CVar(0)))))
+  let pair_motive = shift_core(CSigma("x", a, b), 3, 0)
+  CLam(
+    "x",
+    a,
+    CLam("y", b, CApp(f_shifted, CPair(CVar(1), CVar(0), pair_motive))),
+  )
 }
 
 ///|
@@ -452,11 +583,16 @@ pub fn skolem_target_type(a : CoreTm, b : CoreTm, c_xy : CoreTm) -> CoreTm {
 
 ///|
 /// Forward Skolemizer: `h : Πx:A. Σy:B(x). C(x, y)  ↦  < λx:A. fst(h x),  λx:A. snd(h x) >`.
-pub fn skolemize_term(a : CoreTm, h_tm : CoreTm) -> CoreTm {
+pub fn skolemize_term(
+  a : CoreTm,
+  b : CoreTm,
+  c_xy : CoreTm,
+  h_tm : CoreTm,
+) -> CoreTm {
   let h1 = shift_core(h_tm, 1, 0)
   let witness_fn = CLam("x", a, CFst(CApp(h1, CVar(0))))
   let cert_fn = CLam("x", a, CSnd(CApp(h1, CVar(0))))
-  CPair(witness_fn, cert_fn)
+  CPair(witness_fn, cert_fn, shift_core(skolem_target_type(a, b, c_xy), 1, 0))
 }
 
 ///|
@@ -473,7 +609,11 @@ pub fn deskolemize_term(
   let raw_lam = CLam(
     "x",
     a,
-    CPair(CApp(CFst(s1), CVar(0)), CApp(CSnd(s1), CVar(0))),
+    CPair(
+      CApp(CFst(s1), CVar(0)),
+      CApp(CSnd(s1), CVar(0)),
+      shift_core(skolem_source_type(a, b, c_xy), 2, 0),
+    ),
   )
   CAnn(raw_lam, skolem_source_type(a, b, c_xy))
 }

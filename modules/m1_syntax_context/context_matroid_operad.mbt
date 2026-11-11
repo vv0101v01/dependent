@@ -160,8 +160,29 @@ pub fn Context::lookup_entry_by_lvl(
 }
 
 ///|
-/// O(1) Dependency Query (for levels < 64): returns true iff hypothesis at `later_lvl`
-/// transitively depends on hypothesis at `earlier_lvl`.
+/// Exact dependency query: returns true iff hypothesis at `later_lvl` transitively
+/// depends on hypothesis at `earlier_lvl`.
+/// - Both levels < 64: exact O(1) 64-bit transitive-mask bit test.
+/// - Otherwise: worklist sweep over direct dependencies (each resolved exactly via
+///   `has_free_var`), short-circuiting through the exact 64-bit masks once the sweep
+///   re-enters the mask window — the pre-64-bit masks stay exact for levels < 64.
+fn ctx_entry_direct_dep(
+  entries : Array[CtxEntry],
+  later_lvl : Int32,
+  target_lvl : Int32,
+) -> Bool {
+  let e = entries[later_lvl]
+  let idx = later_lvl - 1 - target_lvl
+  if e.ty.has_free_var(idx) {
+    return true
+  }
+  match e.local_def {
+    Some(v) => v.has_free_var(idx)
+    None => false
+  }
+}
+
+///|
 pub fn Context::lvl_depends_on(
   self : Context,
   later_lvl : Int32,
@@ -172,13 +193,47 @@ pub fn Context::lvl_depends_on(
     later_lvl >= self.entries.length() {
     return false
   }
-  if earlier_lvl < 64 {
-    (self.entries[later_lvl].trans_lvl_mask & (1UL << earlier_lvl)) != 0UL
-  } else {
-    let e = self.entries[later_lvl]
-    let idx = later_lvl - 1 - earlier_lvl
-    e.ty.has_free_var(idx)
+  if later_lvl < 64 {
+    return (self.entries[later_lvl].trans_lvl_mask & (1UL << earlier_lvl)) !=
+      0UL
   }
+  // Deep transitive sweep: dependencies only point strictly downwards, so any
+  // dependency path from `later_lvl` down to `earlier_lvl` visits levels in
+  // `[earlier_lvl, later_lvl)` in decreasing order.
+  let worklist : Array[Int32] = [later_lvl]
+  let visited : Map[Int32, Bool] = Map([])
+  visited[later_lvl] = true
+  let mut head = 0
+  while head < worklist.length() {
+    let l = worklist[head]
+    head = head + 1
+    if l < 64 {
+      // Inside the mask window the stored transitive mask is EXACT for all levels < l.
+      if (self.entries[l].trans_lvl_mask & (1UL << earlier_lvl)) != 0UL {
+        return true
+      }
+      continue
+    }
+    let mut t = earlier_lvl
+    while t < l {
+      if ctx_entry_direct_dep(self.entries, l, t) {
+        if t == earlier_lvl {
+          return true
+        }
+        if t < 64 {
+          // Exact O(1) shortcut through the stored transitive mask of `t`.
+          if (self.entries[t].trans_lvl_mask & (1UL << earlier_lvl)) != 0UL {
+            return true
+          }
+        } else if !visited.contains(t) {
+          visited[t] = true
+          worklist.push(t)
+        }
+      }
+      t = t + 1
+    }
+  }
+  false
 }
 
 ///|
@@ -408,6 +463,8 @@ fn operad_graft_rec(
     | EmptyTy
     | NatTy
     | Zero
+    | BoolTy
+    | BoolLit(_)
     | ConstRef(_, _) => e
     SmallEncode(l, a) =>
       mk_small_encode(l, operad_graft_rec(a, plugs, binder_depth))

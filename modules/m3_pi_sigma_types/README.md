@@ -10,7 +10,8 @@
    - $\Pi$-局部可靠性（$\beta$-消元）與完備性（$\eta$-展開）：$(\lambda x:A. b)\ a \mapsto b[x := a]$，$f \equiv_\eta \lambda x:A. f\ x$。
    - $\Sigma$-局部可靠性（$\beta_1, \beta_2$-投影消元）與完備性（滿射配對 $\eta$-展開）：$\pi_1\langle a, b\rangle \mapsto a$，$\pi_2\langle a, b\rangle \mapsto b$，$p \equiv_\eta \langle \pi_1 p, \pi_2 p\rangle$。
    - $\mathbb{N}$ 與恆等類型 $\mathsf{Id}$ 之 $\iota$-消元：$\mathsf{natrec}(M, z, s, 0) \mapsto z$、$\mathsf{natrec}(M, z, s, \mathsf{S}(n)) \mapsto s(n, \mathsf{natrec}(M, z, s, n))$、$\mathsf{J}(A, a, M, r, a, \mathsf{refl}(a)) \mapsto r$。
-2. **定義 M3.D1（帶類型中性項之 Kripke 語意域 `Val` 與去函數化閉包 `Clos`）**：語法樹 `CoreTm` 使用 De Bruijn 索引，語意域 `Val` 使用 De Bruijn 層級與顯式環境閉包 `Clos{env, body}`；中性項 `VNeu(vty, Neutral)` 黏合攜帶其語意類型以驅動全函數 $\eta$-回讀。
+   - 和類型 $\Sigma$-消元（case $\iota$-消元）：$\mathsf{case}(\mathsf{inl}(v), m, l, r) \mapsto l(v)$、$\mathsf{case}(\mathsf{inr}(v), m, l, r) \mapsto r(v)$；布林排序 $\mathsf{Bool}$ 具典範字面量 $\mathsf{true}, \mathsf{false}$ 與可判定轉換。
+2. **定義 M3.D1（帶類型中性項之 Kripke 語意域 `Val` 與去函數化閉包 `Clos`）**：語法樹 `CoreTm` 使用 De Bruijn 索引，語意域 `Val` 使用 De Bruijn 層級與顯式環境閉包 `Clos{env, body}`；中性項 `VNeu(vty, Neutral)` 黏合攜帶其語意類型以驅動全函數 $\eta$-回讀。核心語法完整涵蓋 $\Pi, \Sigma, \mathbf{1}, \mathbb{N}, \mathsf{Id}, \|\cdot\|, \mathsf{Sum}, \mathsf{Empty}, \mathsf{Bool}$、多態宇宙變數 `CPolyUniv(v, o)` 與帶動機註記之配對 `CPair(a, b, m)`／帶類型註記之 `CRefl(t, x)`；語境反射 `JudgmentCtx::push_def` 將局部定義 `x : A := v` 之**值**注入語意環境，使後續引用於 NbE 中 zeta-展開。
 3. **定理 M3.T1（類型導向 NbE 決定定義等價與證明無關性定理）**：回讀算子 $\mathsf{quote\_val}(d, \llbracket A \rrbracket, \llbracket t \rrbracket)$ 對任意良類型項產生唯一 $\beta\eta\iota$-正規形，並在單位類型 $\top$ 與截斷命題 $\|A\|_{-1}$ 上以 $O(1)$ 實現定義級證明無關性（Proof Irrelevance：$u \equiv v : \|A\|_{-1}$）。
 4. **定理 M3.T2（雙向類型判斷合成與檢驗健全性定理）**：將判斷 $\Gamma \vdash t : A$ 分解為合成模式 $\Gamma \vdash t \Rightarrow A$ 與檢驗模式 $\Gamma \vdash t \Leftarrow A$，支援累積與非累積宇宙檢驗模式切換。
 5. **定理 M3.T3（依賴 Currying 泛性質同構定理）**：對任意依賴族 $A, B(x), C(p)$，存在顯式互逆項轉換器 `dep_curry_term` 與 `dep_uncurry_term`，使得於開放上下文中恆成立定義等價：

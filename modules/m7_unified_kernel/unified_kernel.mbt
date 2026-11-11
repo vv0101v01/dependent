@@ -15,6 +15,12 @@ pub(all) suberror KernelError {
   InvalidPermutation(Int32)
   DependencyViolatingSwap(Int32, Int32)
   NonSplitExactSequence(Int32)
+  /// `base_len` of a telescope short exact sequence must satisfy `0 <= base_len <= |total_ctx|`.
+  InvalidBaseLength(Int32, Int32)
+  /// Every fiber hypothesis of a splitting section needs exactly one closed default witness.
+  FiberDefaultCountMismatch(Int32, Int32)
+  /// A fiber default witness must be a CLOSED term (it lives over `Γ_base` alone).
+  NonClosedFiberDefault(Int32)
 }
 
 ///|
@@ -215,14 +221,10 @@ pub extend SemidirectCtxElem with Eq::{equal, not_equal}
 pub extend SemidirectCtxElem with @debug.Debug::{to_repr}
 
 ///|
+/// Exact free-occurrence test delegating to M1's intrinsic bit-summary + exact
+/// slow-path fallback (replaces the former conservative `idx >= 64` over-approximation).
 fn syn_may_occur(e : @m1.SynExpr, idx : Int32) -> Bool {
-  if idx < 0 || idx >= e.max_free {
-    false
-  } else if idx >= 64 {
-    true
-  } else {
-    ((e.occ_mask >> idx) & 1UL) != 0UL
-  }
+  e.has_free_var(idx)
 }
 
 ///|
@@ -331,8 +333,11 @@ pub extend TelescopeExactAnalysis with @debug.Debug::{to_repr}
 pub fn analyze_telescope_exact_sequence(
   total_ctx : @m1.Context,
   base_len : Int32,
-) -> TelescopeExactAnalysis {
+) -> TelescopeExactAnalysis raise KernelError {
   let n = total_ctx.len()
+  if base_len < 0 || base_len > n {
+    raise KernelError::InvalidBaseLength(base_len, n)
+  }
   let fiber_len = n - base_len
   let mut obs = 0
   let strengthened : Array[@m1.SynExpr] = []
@@ -375,6 +380,19 @@ pub fn synthesize_splitting_section(
   let analysis = analyze_telescope_exact_sequence(total_ctx, base_len)
   if !analysis.splits_directly {
     raise KernelError::NonSplitExactSequence(analysis.obstruction_rank)
+  }
+  // EVERY fiber hypothesis must receive exactly one default witness, and each
+  // witness must be a closed term (valid over `Γ_base` alone).
+  if closed_fiber_defaults.length() != analysis.fiber_len {
+    raise KernelError::FiberDefaultCountMismatch(
+      closed_fiber_defaults.length(),
+      analysis.fiber_len,
+    )
+  }
+  for k, def_tm in closed_fiber_defaults {
+    if !def_tm.is_closed() {
+      raise KernelError::NonClosedFiberDefault(k)
+    }
   }
   let mut base_ctx = @m1.Context::empty()
   for i = 0; i < base_len; i = i + 1 {

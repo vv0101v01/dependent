@@ -18,7 +18,7 @@ pub fn chu_dual(ChuTypingSpace) -> ChuTypingSpace
 
 pub fn collapse_localized_roof(LocalizedRoof) -> @m1_syntax_context.SynExpr
 
-pub fn compile_ch_term_to_core(Array[Bool], @m4_curry_howard_prop.CHTerm) -> @m3_pi_sigma_types.CoreTm raise BridgeError
+pub fn compile_ch_term_to_core(Array[Bool], @m4_curry_howard_prop.CHTerm) -> @m3_pi_sigma_types.CoreTm raise
 
 pub fn compile_ch_type_to_core(Array[Bool], @m4_curry_howard_prop.CHType) -> @m3_pi_sigma_types.CoreTm raise BridgeError
 

@@ -23,11 +23,11 @@
 | 子模組資料夾 | 核心演算法族群 | 代表複雜度與硬體／位元優化 |
 | :--- | :--- | :--- |
 | `m1_syntax_context` | 64-bit 位元摘要 AST、Hash-Consed Arena、顯式 $\sigma$-代換、反擬陣、Operad | $O(1)$ 封閉性／變數出現／雜湊快篩 |
-| `m2_universe_cumul` | 代數宇宙、Fuss-Free 小性、Tarjan SCC + SPFA 伽羅瓦求解、Ramsey 分層 | $O(1)$ 64 變數可達快篩；多項式完備蘊涵判定 |
+| `m2_universe_cumul` | 代數宇宙、Fuss-Free 小性、Tarjan SCC + SPFA 伽羅瓦求解、Ramsey 分層、König 精確反鏈寬度 | $O(1)$ 64 變數可達快篩；多項式完備蘊涵判定 |
 | `m3_pi_sigma_types` | 帶類型中性項 Kripke NbE、雙向檢驗、柯里化與 Skolem 同構 | $O(1)$ 層級轉索引 `d - 1 - l` |
-| `m4_curry_howard_prop` | 公式$\leftrightarrow$類型雙向同構、Squash 守衛、Gentzen 切消元、CPS、抹除提取 | 雙重良基指標保證切消元終止 |
+| `m4_curry_howard_prop` | 公式$\leftrightarrow$類型雙向同構、Squash／無 UIP-K `Id`／存在見證洩漏守衛、Gentzen 切消元、置換與 $\eta$ 正規化、CPS、抹除提取 | 雙重良基指標保證切消元終止 |
 | `m5_fibration_kan` | 劈裂重索引、$\Sigma/\Pi$ Kan 擴張、語境拉回、Beck-Chevalley、層黏合 | 線性語境偏移與 NbE 驗證 |
-| `m6_chu_galois_bridge` | 64-bit Chu 空間、伽羅瓦伴隨、M4$\to$M3 編譯器、Morita、局部化、博弈 | 單指令級 `UInt64` 位元遮罩伽羅瓦運算 |
+| `m6_chu_galois_bridge` | 64-bit Chu 空間、伽羅瓦伴隨、M4$\to$M3 編譯器（析取 case／Bool／Empty 全覆蓋）、Morita、局部化、博弈 | 單指令級 `UInt64` 位元遮罩伽羅瓦運算 |
 | `m7_unified_kernel` | 雙模態核心認證、半直積複合、伸縮短正合序列分裂截面 | 第一階段 7 模組閉環認證 |
 | `m8_inductive_family` | 極性與巢狀嚴格正檢驗、IR 同時解碼、II 互鎖檢驗與消元、$W$-樹摺疊 | 64-bit `sp_param_mask` 與 $O(1)$ `is_leaf` |
 | `m9_coalgebra_stream` | 無窮流展開、Cauchy 卷積與導數、餘模式字典樹、時鐘守護、並查集雙模擬 | $O((N_1+N_2)\alpha(N_1+N_2))$ 無限雙模擬判定 |

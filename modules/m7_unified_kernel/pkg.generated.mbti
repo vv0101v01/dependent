@@ -11,7 +11,7 @@ import {
 }
 
 // Values
-pub fn analyze_telescope_exact_sequence(@m1_syntax_context.Context, Int32) -> TelescopeExactAnalysis
+pub fn analyze_telescope_exact_sequence(@m1_syntax_context.Context, Int32) -> TelescopeExactAnalysis raise KernelError
 
 pub fn compose_semidirect(SemidirectCtxElem, SemidirectCtxElem) -> SemidirectCtxElem raise KernelError
 
@@ -28,6 +28,9 @@ pub(all) suberror KernelError {
   InvalidPermutation(Int32)
   DependencyViolatingSwap(Int32, Int32)
   NonSplitExactSequence(Int32)
+  InvalidBaseLength(Int32, Int32)
+  FiberDefaultCountMismatch(Int32, Int32)
+  NonClosedFiberDefault(Int32)
 }
 
 // Types and methods

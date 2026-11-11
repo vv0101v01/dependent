@@ -17,7 +17,7 @@
 4. **定理 M2.T1（無煩衍生累積提升函子性定理）**：定義衍生累積提升 $\uparrow_i^j M := \Downarrow_j(\Uparrow_i M)$，則恆等律 $\uparrow_i^i M = M$ 與複合折疊律 $\uparrow_j^k(\uparrow_i^j M) = \uparrow_i^k M$ 無須額外相干強制轉型公理，完全由局部消元正規化自動導出。
 5. **定理 M2.T2（Tarjan 強連通分量無正環判準與點態最小自然賦值定理）**：非負差分約束系統於 $\mathbb{N}$ 可滿足若且唯若任一強連通分量（SCC）內部不含嚴格正權重邊（$w > 0$，排除 $\mathcal{U}_i : \mathcal{U}_i$ 型 Girard/Russell 悖論環）；可滿足時縮點有向無環圖（DAG）之最長路徑動態規劃給出全體模型中之唯一點態最小賦值 $\nu_{\min}$。
 6. **命題 M2.P1（參數變異性有界半格與複合單調律）**：變異性標記 $\mathsf{Irrelevant} \sqsubset \mathsf{Covariant} \sqsubset \mathsf{Invariant}$ 構成有界上確界半格與結合複合么半群。
-7. **定理 M2.T3（宇宙偏序集之 Ramsey-Dilworth 鏈與反鏈分層對偶定理）**：在任意一致宇宙約束圖導出之嚴格偏序 $(V, \prec)$ 上，最大嚴格鏈高度 $h$ 等於最小反鏈分層數（Mirsky 對偶定理），且恆滿足 Erdős-Szekeres / Ramsey 乘積界 $h \cdot w_{\max} \ge |V|$。
+7. **定理 M2.T3（宇宙偏序集之 Ramsey-Dilworth 鏈、精確反鏈寬度與分層對偶定理）**：在任意一致宇宙約束圖導出之嚴格偏序 $(V, \prec)$ 上，最大嚴格鏈高度 $h$ 等於最小反鏈分層數（Mirsky 對偶定理，分層按各元素為起點之最長鏈秩構造）；`max_antichain_width` 給出**精確最大反鏈寬度** $w$（Dilworth 定理），由可比較性二部圖之最大匹配經 König 定理以 $w = |V| - \nu_{\max}$ 計算（故 $w \ge$ 任一 Mirsky 層大小，兩者於一般偏序上嚴格不同）；且恆滿足 Erdős-Szekeres / Ramsey 乘積界 $h \cdot w \ge |V|$。
 
 ---
 
@@ -31,7 +31,7 @@
 | Tarjan SCC + 縮點 DAG 最長路最小賦值與 SPFA 通用差分求解器 (`solve_minimal_valuation`) | `constraint_solver_ramsey.mbt` | 非負圖 $O(V + E)$ / 含負權邊 $O(V \cdot E)$ | 線性時間檢測宇宙悖論正環並構造點態最小自然數模型 |
 | 伽羅瓦反駁完備蘊涵決策器 (`entails_le`, `check_level_rel`) | `constraint_solver_ramsey.mbt` | 常數短路 $O(1)$ / 完備決策 $O(k \cdot V \cdot E)$ | 支援任意 $\max / +k$ 代數宇宙不等式蘊涵與累積/非累積模式切換 |
 | Fourier-Motzkin 私有宇宙變數局部消元器 (`eliminate_private_vars`) | `constraint_solver_ramsey.mbt` | $O(\|E_{\text{priv}}\| \cdot d_{\text{in}} d_{\text{out}})$ | 消除不透明定義內部私有宇宙變數並去重壓縮公開邊集 |
-| Ramsey-Dilworth 偏序鏈與反鏈分層器 (`stratify_ramsey_dilworth`) | `constraint_solver_ramsey.mbt` | $O(V^2 + V \cdot \text{entail})$ | 計算最長嚴格宇宙階層鏈、Mirsky 反鏈層分解與 Ramsey 界驗證 |
+| Ramsey-Dilworth 偏序鏈、精確反鏈寬度與反鏈分層器 (`stratify_ramsey_dilworth`) | `constraint_solver_ramsey.mbt` | $O(V^2 + V \cdot \text{entail} + V \cdot \nu)$（$\nu$ 為匹配規模） | 計算最長嚴格宇宙階層鏈、Mirsky 反鏈層分解、經 König 增廣路匹配之精確 Dilworth 最大反鏈寬度與 Ramsey 界驗證 |
 
 ---
 

@@ -22,8 +22,6 @@ pub fn ii_ty_ctx(IITy) -> IICtx
 
 pub fn ir_check_and_decode_card(IRUni) -> Int32 raise InductiveError
 
-pub fn[D] ir_decode_generic(IRCode[D], IRNode) -> D raise InductiveError
-
 pub fn[D] ir_decode_with_root(IRCode[D], IRCode[D], IRNode) -> D raise InductiveError
 
 pub fn[S] w_tree_height(WTree[S]) -> Int32

@@ -10,7 +10,7 @@
 2. **定理 M7.T2（端到端柯里-霍華德證明消除、純程式提取與核心重認證定理）**：`UnifiedKernel::certify_curry_howard_proof` 對任一 M4 構造性證明執行迂迴消元與證明抹除提取純計算見證（`ExtractedProg`），再經 M6 雙命名空間編譯器與 M5 語法反射嵌入統一伸縮語境，由 M3 NbE 核心從零獨立重驗通過。
 3. **定理 M7.T3（反擬陣相容語境自同構與纖維代換半直積同態定理）**：語境置換 $\pi \in \mathfrak{S}_n$ 合法當且僅當對所有依賴關係 $d \prec_{\mathrm{dep}} l$ 保持 $\pi(d) < \pi(l)$；半直積複合 `compose_semidirect(g2, g1)` 嚴格滿足作用同態律：
    $$\mathsf{apply\_subst}(\mathsf{apply\_subst}(e, \llbracket g_1 \rrbracket),\ \llbracket g_2 \rrbracket) \;=\; \mathsf{apply\_subst}(e, \llbracket g_2 \rtimes g_1 \rrbracket)$$
-4. **定理 M7.T4（依賴伸縮短正合序列分裂判準與截面合成定理）**：對短正合序列 $0 \to \Delta_{\mathrm{fib}} \xrightarrow{\iota} (\Gamma_{\mathrm{base}}.\Delta_{\mathrm{fib}}) \xrightarrow{\pi} \Gamma_{\mathrm{base}} \to 0$，一階導出分裂障礙秩 `obstruction_rank == 0` 當且僅當 $\Delta_{\mathrm{fib}}$ 中所有纖維假設皆可沿 $O(1)$ 位元遮罩強化跨越 $\Gamma_{\mathrm{base}}$；此時 `synthesize_splitting_section` 構造分裂截面 $s : \Gamma_{\mathrm{base}} \to (\Gamma_{\mathrm{base}}.\Delta_{\mathrm{fib}})$ 嚴格滿足 $\pi \circ s = \mathsf{id}_{\Gamma_{\mathrm{base}}}$。
+4. **定理 M7.T4（依賴伸縮短正合序列分裂判準與截面合成定理）**：對短正合序列 $0 \to \Delta_{\mathrm{fib}} \xrightarrow{\iota} (\Gamma_{\mathrm{base}}.\Delta_{\mathrm{fib}}) \xrightarrow{\pi} \Gamma_{\mathrm{base}} \to 0$（輸入強制 $0 \le \mathrm{base\_len} \le |\Gamma_{\mathrm{total}}|$，違者 `InvalidBaseLength`），一階導出分裂障礙秩 `obstruction_rank == 0` 當且僅當 $\Delta_{\mathrm{fib}}$ 中所有纖維假設皆可沿 $O(1)$ 位元遮罩強化跨越 $\Gamma_{\mathrm{base}}$；此時 `synthesize_splitting_section` 要求**每條纖維假設恰有一個閉**預設見證（`FiberDefaultCountMismatch` / `NonClosedFiberDefault`），並構造分裂截面 $s : \Gamma_{\mathrm{base}} \to (\Gamma_{\mathrm{base}}.\Delta_{\mathrm{fib}})$ 嚴格滿足 $\pi \circ s = \mathsf{id}_{\Gamma_{\mathrm{base}}}$。
 
 ---
 
@@ -22,7 +22,7 @@
 | 依賴類型論雙模態定理認證器 (`UnifiedKernel::certify_dtt_theorem`) | `unified_kernel.mbt` | 多項式於正規化規模 | 整合 M1 雜湊駐留、M2 模態宇宙檢查與 M3 $\beta\eta$ 正規形式提取 |
 | 端到端柯里-霍華德跨體系認證管線 (`UnifiedKernel::certify_curry_howard_proof`) | `unified_kernel.mbt` | $O(\|p\|)$ 編譯 + NbE 重驗 | 自動消除證明迂迴、提取計算見證並在統一 DTT 核心完成二次獨立檢驗 |
 | 反擬陣自同構檢驗與半直積複合器 (`verify_admissible_context_automorphism`, `semidirect_to_subst`, `compose_semidirect`) | `unified_kernel.mbt` | $O(n^2)$ 位元檢查 / $O(n \cdot \|t\|)$ 複合 | 利用 `occ_mask` $O(1)$ 測試變數依賴並計算交叉代換乘積 |
-| 伸縮短正合序列障礙分析與分裂截面合成器 (`analyze_telescope_exact_sequence`, `synthesize_splitting_section`) | `unified_kernel.mbt` | $O(\|\Delta_{\mathrm{fib}}\| \cdot \|\Gamma_{\mathrm{base}}\|)$ 位元測試 | 計算纖維對基底耦合秩，零障礙時自動強化纖維並合成右逆截面 $s$ |
+| 伸縮短正合序列障礙分析與分裂截面合成器 (`analyze_telescope_exact_sequence`, `synthesize_splitting_section`) | `unified_kernel.mbt` | $O(\|\Delta_{\mathrm{fib}}\| \cdot \|\Gamma_{\mathrm{base}}\|)$ 位元測試 | 強制驗證 `base_len` 界與每纖維一閉預設見證；計算纖維對基底耦合秩，零障礙時自動強化纖維並合成右逆截面 $s$ |
 | 全域核心遙測與不變量巡檢器 (`UnifiedKernel::collect_telemetry`) | `unified_kernel.mbt` | 多項式於核心規模 | 匯總 Arena 節點數、Ramsey-Dilworth 宇宙鏈高／反鏈寬、Chu-Galois 與 Beck-Chevalley 狀態 |
 
 ---

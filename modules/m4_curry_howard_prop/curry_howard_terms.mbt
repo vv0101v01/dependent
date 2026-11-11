@@ -13,6 +13,9 @@ pub suberror LogicError {
   ExpectedForallProof(CHType)
   ExpectedExistsProof(CHType)
   SquashEliminationIntoRelevantType(CHType)
+  /// Existential-elimination side condition violated: the unpacked witness object
+  /// variable occurs free in the conclusion (no witness leakage without UIP/K!).
+  WitnessLeakInExistsElim(CHType)
   InvalidSequentRule(String)
 }
 
@@ -239,13 +242,16 @@ pub fn subst_ch_type_obj(ty : CHType, target : Int32, repl : ObjTerm) -> CHType 
 /// Subsingleton / Strict Proof-Irrelevance Predicate (`is_prop_irrelevant`):
 /// Closed under `TUnit`, `TEmpty`, `TSquash(_)`, `TProd` of irrelevant types,
 /// `TArrow(_, irr)` and `TPi(_, _, irr)` (Heyting Sublocale / Modal Reflector Closure!).
+/// IMPORTANT: `TId` is deliberately NOT proof-irrelevant — without UIP/K or an
+/// axiom of uniqueness of identity proofs, distinct proofs of an equality are
+/// logically distinct, so `Id` neither squashes nor erases.
 pub fn is_prop_irrelevant(ty : CHType) -> Bool {
   match ty {
-    TUnit | TEmpty | TSquash(_) | TId(_, _, _) => true
+    TUnit | TEmpty | TSquash(_) => true
     TProd(a, b) => is_prop_irrelevant(a) && is_prop_irrelevant(b)
     TArrow(_, b) => is_prop_irrelevant(b)
     TPi(_, _, b) => is_prop_irrelevant(b)
-    TPredFamily(_, _) | TSum(_, _) | TSigma(_, _, _) => false
+    TPredFamily(_, _) | TId(_, _, _) | TSum(_, _) | TSigma(_, _, _) => false
   }
 }
 
@@ -438,6 +444,85 @@ pub fn subst_ch_term_obj(tm : CHTerm, target : Int32, repl : ObjTerm) -> CHTerm 
 }
 
 ///|
+/// Does object variable `k` (under the current object binders) occur free in `ty`?
+fn ch_type_has_obj_var(ty : CHType, k : Int32) -> Bool {
+  match ty {
+    TUnit | TEmpty => false
+    TPredFamily(_, args) => {
+      for a in args {
+        if obj_term_has_var(a, k) {
+          return true
+        }
+      }
+      false
+    }
+    TId(_, l, r) => obj_term_has_var(l, k) || obj_term_has_var(r, k)
+    TProd(a, b) => ch_type_has_obj_var(a, k) || ch_type_has_obj_var(b, k)
+    TSum(a, b) => ch_type_has_obj_var(a, k) || ch_type_has_obj_var(b, k)
+    TArrow(a, b) => ch_type_has_obj_var(a, k) || ch_type_has_obj_var(b, k)
+    TPi(_, _, body) => ch_type_has_obj_var(body, k + 1)
+    TSigma(_, _, body) => ch_type_has_obj_var(body, k + 1)
+    TSquash(a) => ch_type_has_obj_var(a, k)
+  }
+}
+
+///|
+fn obj_term_has_var(t : ObjTerm, k : Int32) -> Bool {
+  match t {
+    OVar(i) => i == k
+    OConst(_) => false
+    OFun(_, args) => {
+      for a in args {
+        if obj_term_has_var(a, k) {
+          return true
+        }
+      }
+      false
+    }
+  }
+}
+
+///|
+/// Shift object-variable De Bruijn indices >= `cutoff` inside a `CHTerm`
+/// (proof-variable indices are untouched; object binders `{PTDepLam, PTUnpack}`
+/// raise the cutoff by one under their bodies).
+pub fn shift_ch_term_obj(tm : CHTerm, delta : Int32, cutoff : Int32) -> CHTerm {
+  if delta == 0 {
+    return tm
+  }
+  fn go(t : CHTerm, cut : Int32) -> CHTerm {
+    shift_ch_term_obj(t, delta, cut)
+  }
+
+  match tm {
+    PTVar(_) | PTUnit => tm
+    PTRefl(s, o) => PTRefl(s, shift_obj_term(o, delta, cutoff))
+    PTAbsurd(ty, c) =>
+      PTAbsurd(shift_ch_type_obj(ty, delta, cutoff), go(c, cutoff))
+    PTPair(a, b) => PTPair(go(a, cutoff), go(b, cutoff))
+    PTFst(p) => PTFst(go(p, cutoff))
+    PTSnd(p) => PTSnd(go(p, cutoff))
+    PTInl(rty, a) => PTInl(shift_ch_type_obj(rty, delta, cutoff), go(a, cutoff))
+    PTInr(lty, b) => PTInr(shift_ch_type_obj(lty, delta, cutoff), go(b, cutoff))
+    PTCase(s, l, r) => PTCase(go(s, cutoff), go(l, cutoff), go(r, cutoff))
+    PTLam(dom, body) =>
+      PTLam(shift_ch_type_obj(dom, delta, cutoff), go(body, cutoff))
+    PTApp(f, a) => PTApp(go(f, cutoff), go(a, cutoff))
+    PTDepLam(d, body) => PTDepLam(d, go(body, cutoff + 1))
+    PTDepApp(f, o) => PTDepApp(go(f, cutoff), shift_obj_term(o, delta, cutoff))
+    PTPack(w, prf, ex_ty) =>
+      PTPack(
+        shift_obj_term(w, delta, cutoff),
+        go(prf, cutoff),
+        shift_ch_type_obj(ex_ty, delta, cutoff),
+      )
+    PTUnpack(ex, body) => PTUnpack(go(ex, cutoff), go(body, cutoff + 1))
+    PTSquashBox(w) => PTSquashBox(go(w, cutoff))
+    PTLetSquash(sq, body) => PTLetSquash(go(sq, cutoff), go(body, cutoff))
+  }
+}
+
+///|
 /// Verify BHK Constructive Proof Term `tm` in proof context `prf_ctx` (De Bruijn levels `0 .. n-1`).
 pub fn infer_ch_term(
   prf_ctx : Array[CHType],
@@ -538,8 +623,14 @@ pub fn infer_ch_term(
           }
           shifted_ctx.push(fam_ty)
           let res_ty = infer_ch_term(shifted_ctx, body)
-          // Strengthen object variable 0 (standard existential side condition: x not free in conclusion)
-          shift_ch_type_obj(res_ty, -1, 1)
+          // Existential-elimination SIDE CONDITION: the unpacked witness object
+          // variable `x` (= object var 0 in the body context) must NOT occur free
+          // in the conclusion, otherwise the witness leaks into the result type!
+          if ch_type_has_obj_var(res_ty, 0) {
+            raise LogicError::WitnessLeakInExistsElim(res_ty)
+          }
+          // Strengthen object variable 0 (verified absent above).
+          shift_ch_type_obj(res_ty, -1, 0)
         }
         other => raise LogicError::ExpectedExistsProof(other)
       }
@@ -565,7 +656,15 @@ pub fn infer_ch_term(
 ///|
 /// Local Axiom (Prawitz Proof Normalization / Detour Elimination on `CHTerm`):
 /// Eliminates all β-detours (`App(Lam, a)`, `Fst(Pair)`, `Snd(Pair)`, `Case(Inl/Inr)`,
-/// `DepApp(DepLam)`, `Unpack(Pack)`, `LetSquash(SquashBox)`).
+/// `DepApp(DepLam)`, `Unpack(Pack)`, `LetSquash(SquashBox)`), PLUS the permutative
+/// commuting conversions and extensional η-laws required by the tensor-sum
+/// adjunction roundtrip (`組合範例.md` #5):
+/// - `Case(Unpack(e, Case(v, k1, k2)), L, R)  ~~>  Unpack(e, Case(v, k1·L, k2·R))`
+///   (case commutes with existential unpacking; branches re-bound to the K-branch values),
+/// - `Case(s, <a, b1>, <a, b2>)  ~~>  <a, Case(s, b1, b2)>` (case commutes with pairs,
+///   both plain products and existential packs with equal heads/annotations),
+/// - `Case(s, inl(v0), inr(v0))  ~~>  s` (sum η),
+/// - `Unpack(e, <x0, p0>)  ~~>  e` (existential η on the exact component pair).
 pub fn normalize_ch_term(tm : CHTerm) -> CHTerm {
   match tm {
     PTVar(_) | PTUnit | PTRefl(_, _) => tm
@@ -583,12 +682,51 @@ pub fn normalize_ch_term(tm : CHTerm) -> CHTerm {
       }
     PTInl(ty, a) => PTInl(ty, normalize_ch_term(a))
     PTInr(ty, b) => PTInr(ty, normalize_ch_term(b))
-    PTCase(s, l, r) =>
-      match normalize_ch_term(s) {
-        PTInl(_, v) => normalize_ch_term(subst_ch_term(l, 0, v))
-        PTInr(_, v) => normalize_ch_term(subst_ch_term(r, 0, v))
-        ns => PTCase(ns, normalize_ch_term(l), normalize_ch_term(r))
+    PTCase(s, l, r) => {
+      let ns = normalize_ch_term(s)
+      let nl = normalize_ch_term(l)
+      let nr = normalize_ch_term(r)
+      match ns {
+        PTInl(_, v) => normalize_ch_term(subst_ch_term(nl, 0, v))
+        PTInr(_, v) => normalize_ch_term(subst_ch_term(nr, 0, v))
+        PTUnpack(ex, k_body) =>
+          // Case-of-unpack permutative commuting conversion: floats the outer case
+          // through the existential unpacking, fusing it into both K-branches.
+          match k_body {
+            PTCase(PTVar(0), k1, k2) => {
+              let l_in = shift_ch_term_obj(nl, 1, 0)
+              let r_in = shift_ch_term_obj(nr, 1, 0)
+              let fused_l = normalize_ch_term(PTCase(k1, l_in, r_in))
+              let fused_r = normalize_ch_term(PTCase(k2, l_in, r_in))
+              normalize_ch_term(
+                PTUnpack(ex, PTCase(PTVar(0), fused_l, fused_r)),
+              )
+            }
+            _ => PTCase(ns, nl, nr)
+          }
+        sv =>
+          match (nl, nr) {
+            // Sum η: `case(s, p ↦ inl(p), q ↦ inr(q)) ≡ s`.
+            (PTInl(_, PTVar(0)), PTInr(_, PTVar(0))) => sv
+            // Case-of-pair commuting conversion (plain product heads must coincide).
+            (PTPair(a1, b1), PTPair(a2, b2)) =>
+              if a1 == a2 {
+                normalize_ch_term(PTPair(a1, PTCase(sv, b1, b2)))
+              } else {
+                PTCase(sv, nl, nr)
+              }
+            // Case-of-pack commuting conversion (witness heads AND Sigma annotations
+            // must coincide).
+            (PTPack(w1, p1, t1), PTPack(w2, p2, t2)) =>
+              if w1 == w2 && t1 == t2 {
+                normalize_ch_term(PTPack(w1, PTCase(sv, p1, p2), t1))
+              } else {
+                PTCase(sv, nl, nr)
+              }
+            _ => PTCase(sv, nl, nr)
+          }
       }
+    }
     PTLam(dom, body) => PTLam(dom, normalize_ch_term(body))
     PTApp(f, a) => {
       let nf = normalize_ch_term(f)
@@ -605,14 +743,22 @@ pub fn normalize_ch_term(tm : CHTerm) -> CHTerm {
         nf => PTDepApp(nf, o)
       }
     PTPack(w, p, ty) => PTPack(w, normalize_ch_term(p), ty)
-    PTUnpack(ex, body) =>
-      match normalize_ch_term(ex) {
+    PTUnpack(ex, body) => {
+      let nex = normalize_ch_term(ex)
+      let nbody = normalize_ch_term(body)
+      match nex {
         PTPack(w, prf, _) => {
-          let body_inst = subst_ch_term_obj(body, 0, w)
+          let body_inst = subst_ch_term_obj(nbody, 0, w)
           normalize_ch_term(subst_ch_term(body_inst, 0, prf))
         }
-        nex => PTUnpack(nex, normalize_ch_term(body))
+        // Existential η: `unpack(e, <x, p>)` (the exact repackaged witness pair) ≡ `e`.
+        _ =>
+          match nbody {
+            PTPack(OVar(0), PTVar(0), _) => nex
+            _ => PTUnpack(nex, nbody)
+          }
       }
+    }
     PTSquashBox(w) => PTSquashBox(normalize_ch_term(w))
     PTLetSquash(sq, body) =>
       match normalize_ch_term(sq) {

@@ -22,7 +22,7 @@ pub fn syn_to_core(e : @m1.SynExpr) -> @m3.CoreTm raise FibrationError {
   match e.kind {
     Var(i) => CVar(i)
     Univ(l) => CUniv(l)
-    PolyUniv(_, off) => CUniv(off)
+    PolyUniv(v, off) => CPolyUniv(v, off)
     PropSort => CProp
     SmallEncode(l, a) => CSmallEnc(l, syn_to_core(a))
     SmallDecode(l, m) => CSmallDec(l, syn_to_core(m))
@@ -30,7 +30,7 @@ pub fn syn_to_core(e : @m1.SynExpr) -> @m3.CoreTm raise FibrationError {
     Lam(x, a, b) => CLam(x, syn_to_core(a), syn_to_core(b))
     App(f, a) => CApp(syn_to_core(f), syn_to_core(a))
     Sigma(x, a, b) => CSigma(x, syn_to_core(a), syn_to_core(b))
-    Pair(a, b, _) => CPair(syn_to_core(a), syn_to_core(b))
+    Pair(a, b, m) => CPair(syn_to_core(a), syn_to_core(b), syn_to_core(m))
     Fst(p) => CFst(syn_to_core(p))
     Snd(p) => CSnd(syn_to_core(p))
     UnitTy => CUnit
@@ -41,7 +41,7 @@ pub fn syn_to_core(e : @m1.SynExpr) -> @m3.CoreTm raise FibrationError {
     NatRec(m, z, s, n) =>
       CNatRec(syn_to_core(m), syn_to_core(z), syn_to_core(s), syn_to_core(n))
     IdTy(t, l, r) => CId(syn_to_core(t), syn_to_core(l), syn_to_core(r))
-    Refl(_, x) => CRefl(syn_to_core(x))
+    Refl(t, x) => CRefl(syn_to_core(t), syn_to_core(x))
     JElim(t, l, m, rf, r, p) =>
       CJ(
         syn_to_core(t),
@@ -53,16 +53,19 @@ pub fn syn_to_core(e : @m1.SynExpr) -> @m3.CoreTm raise FibrationError {
       )
     SquashTy(a) => CSquash(syn_to_core(a))
     SquashIntro(w) => CBoxProof(syn_to_core(w))
+    BoolTy => CBool
+    BoolLit(b) => CBoolLit(b)
+    EmptyTy => CEmpty
+    Absurd(t, c) => CAbsurd(syn_to_core(t), syn_to_core(c))
+    SumTy(a, b) => CSum(syn_to_core(a), syn_to_core(b))
+    Inl(sty, v) => CInl(syn_to_core(sty), syn_to_core(v))
+    Inr(sty, v) => CInr(syn_to_core(sty), syn_to_core(v))
+    CaseSum(s, m, l, r) =>
+      CCase(syn_to_core(s), syn_to_core(m), syn_to_core(l), syn_to_core(r))
     Hole(s) =>
       raise FibrationError::BridgeUnsupportedConstruct("Unfilled Hole(\{s})")
-    EmptyTy
-    | Absurd(_, _)
-    | SumTy(_, _)
-    | Inl(_, _)
-    | Inr(_, _)
-    | CaseSum(_, _, _, _)
-    | ConstRef(_, _) =>
-      raise FibrationError::BridgeUnsupportedConstruct("Extended construct")
+    ConstRef(_, _) =>
+      raise FibrationError::BridgeUnsupportedConstruct("Opaque ConstRef")
   }
 }
 
@@ -72,6 +75,7 @@ pub fn core_to_syn(tm : @m3.CoreTm) -> @m1.SynExpr {
   match tm {
     CVar(i) => @m1.mk_var_unchecked(i)
     CUniv(l) => @m1.mk_univ(l)
+    CPolyUniv(v, o) => @m1.mk_poly_univ(v, o)
     CProp => @m1.mk_prop_sort()
     CSmallEnc(l, a) => @m1.mk_small_encode(l, core_to_syn(a))
     CSmallDec(l, m) => @m1.mk_small_decode(l, core_to_syn(m))
@@ -79,7 +83,8 @@ pub fn core_to_syn(tm : @m3.CoreTm) -> @m1.SynExpr {
     CLam(x, a, b) => @m1.mk_lam(x, core_to_syn(a), core_to_syn(b))
     CApp(f, a) => @m1.mk_app(core_to_syn(f), core_to_syn(a))
     CSigma(x, a, b) => @m1.mk_sigma(x, core_to_syn(a), core_to_syn(b))
-    CPair(a, b) => @m1.mk_pair(core_to_syn(a), core_to_syn(b), @m1.mk_unit_ty())
+    CPair(a, b, m) =>
+      @m1.mk_pair(core_to_syn(a), core_to_syn(b), core_to_syn(m))
     CFst(p) => @m1.mk_fst(core_to_syn(p))
     CSnd(p) => @m1.mk_snd(core_to_syn(p))
     CUnit => @m1.mk_unit_ty()
@@ -95,7 +100,7 @@ pub fn core_to_syn(tm : @m3.CoreTm) -> @m1.SynExpr {
         core_to_syn(n),
       )
     CId(t, l, r) => @m1.mk_id_ty(core_to_syn(t), core_to_syn(l), core_to_syn(r))
-    CRefl(x) => @m1.mk_refl(@m1.mk_unit_ty(), core_to_syn(x))
+    CRefl(t, x) => @m1.mk_refl(core_to_syn(t), core_to_syn(x))
     CJ(t, l, m, rf, r, p) =>
       @m1.mk_j_elim(
         core_to_syn(t),
@@ -107,6 +112,20 @@ pub fn core_to_syn(tm : @m3.CoreTm) -> @m1.SynExpr {
       )
     CSquash(a) => @m1.mk_squash_ty(core_to_syn(a))
     CBoxProof(w) => @m1.mk_squash_intro(core_to_syn(w))
+    CBool => @m1.mk_bool_ty()
+    CBoolLit(b) => @m1.mk_bool_lit(b)
+    CEmpty => @m1.mk_empty_ty()
+    CAbsurd(t, c) => @m1.mk_absurd(core_to_syn(t), core_to_syn(c))
+    CSum(a, b) => @m1.mk_sum_ty(core_to_syn(a), core_to_syn(b))
+    CInl(sty, v) => @m1.mk_inl(core_to_syn(sty), core_to_syn(v))
+    CInr(sty, v) => @m1.mk_inr(core_to_syn(sty), core_to_syn(v))
+    CCase(s, m, l, r) =>
+      @m1.mk_case_sum(
+        core_to_syn(s),
+        core_to_syn(m),
+        core_to_syn(l),
+        core_to_syn(r),
+      )
     CAnn(e, _) => core_to_syn(e)
   }
 }
@@ -121,7 +140,18 @@ pub fn reflect_ctx_to_m3(
   for entry in ctx.entries {
     let core_ty = syn_to_core(entry.ty)
     let (vty, _) = @m3.check_is_type(jctx, core_ty)
-    jctx = jctx.push_var(entry.name, vty)
+    match entry.local_def {
+      None => jctx = jctx.push_var(entry.name, vty)
+      // Zeta-binders reflect as DEFINITION VALUES: every later reference to `name`
+      // zeta-expands to `v` inside the NbE kernel (e.g. `x : Nat := 0` reflects so
+      // that `x` normalizes to `0`).
+      Some(v) => {
+        let core_v = syn_to_core(v)
+        @m3.check_term(jctx, core_v, vty)
+        let vval = @m3.eval_tm(jctx.env, core_v)
+        jctx = jctx.push_def(entry.name, vty, vval)
+      }
+    }
   }
   jctx
 }

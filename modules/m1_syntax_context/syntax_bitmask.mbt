@@ -46,6 +46,8 @@ pub(all) enum SynKind {
   JElim(SynExpr, SynExpr, SynExpr, SynExpr, SynExpr, SynExpr)
   SquashTy(SynExpr)
   SquashIntro(SynExpr)
+  BoolTy
+  BoolLit(Bool)
   ConstRef(String, Array[Int32])
 }
 
@@ -242,18 +244,7 @@ pub fn mk_pi(name : String, dom : SynExpr, cod : SynExpr) -> SynExpr {
 ///|
 pub fn mk_arrow(dom : SynExpr, cod_unshifted : SynExpr) -> SynExpr {
   // Non-dependent function space A -> B encoded as Pi("_", A, shift(1, B))
-  let shifted_mask = if cod_unshifted.max_free == 0 {
-    0UL
-  } else {
-    cod_unshifted.occ_mask << 1
-  }
-  let shifted_mf = if cod_unshifted.max_free == 0 {
-    0
-  } else {
-    cod_unshifted.max_free + 1
-  }
   let cod = shift_expr_simple(cod_unshifted, 1, 0)
-  let _ = (shifted_mask, shifted_mf)
   mk_pi("_", dom, cod)
 }
 
@@ -630,6 +621,30 @@ pub fn mk_squash_intro(witness : SynExpr) -> SynExpr {
 }
 
 ///|
+pub fn mk_bool_ty() -> SynExpr {
+  {
+    kind: BoolTy,
+    occ_mask: 0UL,
+    slot_mask: 0UL,
+    max_free: 0,
+    size: 1,
+    hash64: mix64(0x21UL),
+  }
+}
+
+///|
+pub fn mk_bool_lit(b : Bool) -> SynExpr {
+  {
+    kind: BoolLit(b),
+    occ_mask: 0UL,
+    slot_mask: 0UL,
+    max_free: 0,
+    size: 1,
+    hash64: combine_hash(0x22UL, if b { 1UL } else { 0UL }, 0UL),
+  }
+}
+
+///|
 pub fn mk_const_ref(name : String, univ_args : Array[Int32]) -> SynExpr {
   let mut h = hash_str(name)
   for u in univ_args {
@@ -687,6 +702,8 @@ fn has_free_var_slow(e : SynExpr, idx : Int32) -> Bool {
     | EmptyTy
     | NatTy
     | Zero
+    | BoolTy
+    | BoolLit(_)
     | ConstRef(_, _) => false
     SmallEncode(_, a)
     | SmallDecode(_, a)
@@ -748,6 +765,8 @@ pub fn shift_expr_simple(e : SynExpr, delta : Int32, cutoff : Int32) -> SynExpr 
     | EmptyTy
     | NatTy
     | Zero
+    | BoolTy
+    | BoolLit(_)
     | ConstRef(_, _) => e
     SmallEncode(l, a) => mk_small_encode(l, shift_expr_simple(a, delta, cutoff))
     SmallDecode(l, a) => mk_small_decode(l, shift_expr_simple(a, delta, cutoff))
@@ -980,6 +999,9 @@ pub impl Show for SynExpr with fn output(self, logger) {
       Show::output(eqp, logger)
       logger.write_string(")")
     }
+    BoolTy => logger.write_string("Bool")
+    BoolLit(true) => logger.write_string("true")
+    BoolLit(false) => logger.write_string("false")
     SquashTy(a) => {
       logger.write_string("||")
       Show::output(a, logger)

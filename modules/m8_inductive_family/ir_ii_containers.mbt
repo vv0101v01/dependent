@@ -25,45 +25,6 @@ pub(all) enum IRNode {
 }
 
 ///|
-/// Simultaneous Dybjer-Setzer Decoding Function `T_γ : U_γ -> D`!
-/// Notice how in the `IRDelta` clause, `rest_code` is computed by passing the recursive
-/// decoding `i => ir_eval_code(code_fn(...), children[i])` into the code continuation!
-pub fn[D] ir_decode_generic(
-  code : IRCode[D],
-  node : IRNode,
-) -> D raise InductiveError {
-  match (code, node) {
-    (IRIota(d), IREnd) => d
-    (IRSigma(bound, next_fn), IRTag(tag, rest)) => {
-      if tag < 0 || tag >= bound {
-        raise InductiveError::InductiveRecursiveDomainError(
-          "IRSigma tag \{tag} out of [0, \{bound})",
-        )
-      }
-      ir_decode_generic(next_fn(tag), rest)
-    }
-    (IRDelta(arity, next_with_decoded), IRBranch(children, rest)) => {
-      if children.length() != arity {
-        raise InductiveError::InductiveRecursiveDomainError(
-          "IRDelta arity mismatch: got \{children.length()}, want \{arity}",
-        )
-      }
-      // Wait: in generic IR over a fixed universe code `root_code`, children live in `U_root`;
-      // here for self-contained finite index codes we also provide concrete closed Tarski Universe `IRUni` below!
-      let _ = next_with_decoded
-      let _ = rest
-      raise InductiveError::InductiveRecursiveDomainError(
-        "Use ir_decode_with_root for recursive IRDelta",
-      )
-    }
-    _ =>
-      raise InductiveError::InductiveRecursiveDomainError(
-        "Mismatched IRCode / IRNode constructor",
-      )
-  }
-}
-
-///|
 /// Full Simultaneous Dybjer-Setzer Decoder `T_root : U_root -> D` where recursive subtrees
 /// in `IRDelta` are decoded against `root_code` and fed back into `next_with_decoded`!
 pub fn[D] ir_decode_with_root(

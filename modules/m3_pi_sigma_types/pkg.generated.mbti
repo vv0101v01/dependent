@@ -8,6 +8,8 @@ import {
 // Values
 pub fn apply_val(Val, Val) -> Val
 
+pub fn case_val(Clos, Clos, Clos, Val) -> Val
+
 pub fn check_is_type(JudgmentCtx, CoreTm) -> (Val, Int32) raise TypeTheoryError
 
 pub fn check_term(JudgmentCtx, CoreTm, Val) -> Unit raise TypeTheoryError
@@ -54,7 +56,7 @@ pub fn skolem_source_type(CoreTm, CoreTm, CoreTm) -> CoreTm
 
 pub fn skolem_target_type(CoreTm, CoreTm, CoreTm) -> CoreTm
 
-pub fn skolemize_term(CoreTm, CoreTm) -> CoreTm
+pub fn skolemize_term(CoreTm, CoreTm, CoreTm, CoreTm) -> CoreTm
 
 pub fn small_dec_val(Int32, Val) -> Val
 
@@ -95,7 +97,7 @@ pub(all) enum CoreTm {
   CLam(String, CoreTm, CoreTm)
   CApp(CoreTm, CoreTm)
   CSigma(String, CoreTm, CoreTm)
-  CPair(CoreTm, CoreTm)
+  CPair(CoreTm, CoreTm, CoreTm)
   CFst(CoreTm)
   CSnd(CoreTm)
   CUnit
@@ -105,11 +107,20 @@ pub(all) enum CoreTm {
   CSucc(CoreTm)
   CNatRec(CoreTm, CoreTm, CoreTm, CoreTm)
   CId(CoreTm, CoreTm, CoreTm)
-  CRefl(CoreTm)
+  CRefl(CoreTm, CoreTm)
   CJ(CoreTm, CoreTm, CoreTm, CoreTm, CoreTm, CoreTm)
   CSquash(CoreTm)
   CBoxProof(CoreTm)
   CAnn(CoreTm, CoreTm)
+  CPolyUniv(Int32, Int32)
+  CBool
+  CBoolLit(Bool)
+  CSum(CoreTm, CoreTm)
+  CInl(CoreTm, CoreTm)
+  CInr(CoreTm, CoreTm)
+  CCase(CoreTm, CoreTm, CoreTm, CoreTm)
+  CEmpty
+  CAbsurd(CoreTm, CoreTm)
 }
 pub fn CoreTm::equal(Self, Self) -> Bool
 pub fn CoreTm::not_equal(Self, Self) -> Bool
@@ -127,6 +138,7 @@ pub(all) struct JudgmentCtx {
 pub fn JudgmentCtx::depth(Self) -> Int32
 pub fn JudgmentCtx::empty(Bool) -> Self
 pub fn JudgmentCtx::normalize(Self, CoreTm, CoreTm) -> CoreTm
+pub fn JudgmentCtx::push_def(Self, String, Val, Val) -> Self
 pub fn JudgmentCtx::push_var(Self, String, Val) -> Self
 
 #derive(@debug.Debug)
@@ -144,6 +156,7 @@ pub(all) enum SpineElim {
   SESmallDec(Int32)
   SENatRec(Clos, Val, Clos)
   SEJ(Val, Val, Clos, Val, Val)
+  SECase(Val, Clos, Clos, Clos)
 }
 pub fn SpineElim::to_repr(Self) -> @debug.Repr
 
@@ -163,9 +176,17 @@ pub(all) enum Val {
   VZero
   VSucc(Val)
   VId(Val, Val, Val)
-  VRefl(Val)
+  VRefl(Val, Val)
   VSquash(Val)
   VBoxProof(Val)
+  VPolyUniv(Int32, Int32)
+  VBool
+  VBoolLit(Bool)
+  VSum(Val, Val)
+  VInl(Val, Val)
+  VInr(Val, Val)
+  VEmpty
+  VAbsurd(Val, Val)
 }
 pub fn Val::to_repr(Self) -> @debug.Repr
 

@@ -22,6 +22,10 @@ pub fn mk_app(SynExpr, SynExpr) -> SynExpr
 
 pub fn mk_arrow(SynExpr, SynExpr) -> SynExpr
 
+pub fn mk_bool_lit(Bool) -> SynExpr
+
+pub fn mk_bool_ty() -> SynExpr
+
 pub fn mk_case_sum(SynExpr, SynExpr, SynExpr, SynExpr) -> SynExpr
 
 pub fn mk_const_ref(String, Array[Int32]) -> SynExpr
@@ -208,6 +212,8 @@ pub(all) enum SynKind {
   JElim(SynExpr, SynExpr, SynExpr, SynExpr, SynExpr, SynExpr)
   SquashTy(SynExpr)
   SquashIntro(SynExpr)
+  BoolTy
+  BoolLit(Bool)
   ConstRef(String, Array[Int32])
 }
 pub fn SynKind::equal(Self, Self) -> Bool

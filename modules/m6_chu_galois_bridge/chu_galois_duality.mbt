@@ -260,6 +260,8 @@ pub fn compile_sort_to_core(s : @m4.DomainSort) -> @m3.CoreTm raise BridgeError 
     CNat
   } else if s.name == "Unit" {
     CUnit
+  } else if s.name == "Bool" {
+    CBool
   } else {
     raise BridgeError::UnsupportedSortInKernelBridge(s.name)
   }
@@ -274,6 +276,8 @@ pub fn compile_obj_to_core(
     OVar(i) => CVar(resolve_split_index(binder_is_obj, true, i))
     OConst("0") => CZero
     OConst("tt") => CStar
+    OConst("true") => CBoolLit(true)
+    OConst("false") => CBoolLit(false)
     OFun("succ", args) =>
       if args.length() == 1 {
         CSucc(compile_obj_to_core(binder_is_obj, args[0]))
@@ -326,7 +330,13 @@ pub fn compile_ch_type_to_core(
         compile_obj_to_core(binder_is_obj, r),
       )
     TSquash(a) => CSquash(compile_ch_type_to_core(binder_is_obj, a))
-    TEmpty | TSum(_, _) | TPredFamily(_, _) =>
+    TSum(a, b) =>
+      CSum(
+        compile_ch_type_to_core(binder_is_obj, a),
+        compile_ch_type_to_core(binder_is_obj, b),
+      )
+    TEmpty => CEmpty
+    TPredFamily(_, _) =>
       raise BridgeError::UnsupportedConstructInKernelBridge("Abstract CHType")
   }
 }
@@ -336,47 +346,135 @@ pub fn compile_ch_type_to_core(
 pub fn compile_ch_term_to_core(
   binder_is_obj : Array[Bool],
   prf : @m4.CHTerm,
-) -> @m3.CoreTm raise BridgeError {
+) -> @m3.CoreTm raise Error {
+  compile_ch_term_go(binder_is_obj, [], prf)
+}
+
+///|
+/// Internal compiler carrying the M4 PROOF context `m4_ctx` alongside the unified
+/// `binder_is_obj` telescope, so sum case-motives can be recovered via M4 inference
+/// (M4 `PTCase` branches bind the sum COMPONENT, and the common branch result type
+/// becomes the constant M3 `CCase` motive under the scrutinee binder).
+fn compile_ch_term_go(
+  binder_is_obj : Array[Bool],
+  m4_ctx : Array[@m4.CHType],
+  prf : @m4.CHTerm,
+) -> @m3.CoreTm raise Error {
   match prf {
     PTVar(i) => CVar(resolve_split_index(binder_is_obj, false, i))
     PTUnit => CStar
-    PTPair(a, b) =>
-      CPair(
-        compile_ch_term_to_core(binder_is_obj, a),
-        compile_ch_term_to_core(binder_is_obj, b),
+    PTPair(a, b) => {
+      let prod_ty = @m4.infer_ch_term(m4_ctx, prf)
+      let motive = @m3.shift_core(
+        compile_ch_type_to_core(binder_is_obj, prod_ty),
+        1,
+        0,
       )
-    PTFst(p) => CFst(compile_ch_term_to_core(binder_is_obj, p))
-    PTSnd(p) => CSnd(compile_ch_term_to_core(binder_is_obj, p))
+      CPair(
+        compile_ch_term_go(binder_is_obj, m4_ctx, a),
+        compile_ch_term_go(binder_is_obj, m4_ctx, b),
+        motive,
+      )
+    }
+    PTFst(p) => CFst(compile_ch_term_go(binder_is_obj, m4_ctx, p))
+    PTSnd(p) => CSnd(compile_ch_term_go(binder_is_obj, m4_ctx, p))
     PTLam(dom, body) => {
       let cdom = compile_ch_type_to_core(binder_is_obj, dom)
       let next = binder_is_obj.copy()
       next.push(false)
-      CLam("h", cdom, compile_ch_term_to_core(next, body))
+      let next_ctx = m4_ctx.copy()
+      next_ctx.push(dom)
+      CLam("h", cdom, compile_ch_term_go(next, next_ctx, body))
     }
     PTApp(f, a) =>
       CApp(
-        compile_ch_term_to_core(binder_is_obj, f),
-        compile_ch_term_to_core(binder_is_obj, a),
+        compile_ch_term_go(binder_is_obj, m4_ctx, f),
+        compile_ch_term_go(binder_is_obj, m4_ctx, a),
       )
     PTDepLam(s, body) => {
       let cs = compile_sort_to_core(s)
       let next = binder_is_obj.copy()
       next.push(true)
-      CLam("x", cs, compile_ch_term_to_core(next, body))
+      let next_ctx : Array[@m4.CHType] = []
+      for t in m4_ctx {
+        next_ctx.push(@m4.shift_ch_type_obj(t, 1, 0))
+      }
+      CLam("x", cs, compile_ch_term_go(next, next_ctx, body))
     }
     PTDepApp(f, obj) =>
       CApp(
-        compile_ch_term_to_core(binder_is_obj, f),
+        compile_ch_term_go(binder_is_obj, m4_ctx, f),
         compile_obj_to_core(binder_is_obj, obj),
       )
     PTPack(w, p, whole_sig) => {
       let cw = compile_obj_to_core(binder_is_obj, w)
-      let cp = compile_ch_term_to_core(binder_is_obj, p)
+      let cp = compile_ch_term_go(binder_is_obj, m4_ctx, p)
       let csig = compile_ch_type_to_core(binder_is_obj, whole_sig)
-      CAnn(CPair(cw, cp), csig)
+      CAnn(CPair(cw, cp, @m3.shift_core(csig, 1, 0)), csig)
     }
-    PTRefl(_, t) => CRefl(compile_obj_to_core(binder_is_obj, t))
-    PTSquashBox(w) => CBoxProof(compile_ch_term_to_core(binder_is_obj, w))
+    PTRefl(s, t) =>
+      CRefl(compile_sort_to_core(s), compile_obj_to_core(binder_is_obj, t))
+    PTSquashBox(w) => CBoxProof(compile_ch_term_go(binder_is_obj, m4_ctx, w))
+    PTAbsurd(target_ty, contra) =>
+      CAbsurd(
+        compile_ch_type_to_core(binder_is_obj, target_ty),
+        compile_ch_term_go(binder_is_obj, m4_ctx, contra),
+      )
+    PTInl(right_ty, a) => {
+      let a_ty = @m4.infer_ch_term(m4_ctx, a)
+      CInl(
+        CSum(
+          compile_ch_type_to_core(binder_is_obj, a_ty),
+          compile_ch_type_to_core(binder_is_obj, right_ty),
+        ),
+        compile_ch_term_go(binder_is_obj, m4_ctx, a),
+      )
+    }
+    PTInr(left_ty, b) => {
+      let b_ty = @m4.infer_ch_term(m4_ctx, b)
+      CInr(
+        CSum(
+          compile_ch_type_to_core(binder_is_obj, left_ty),
+          compile_ch_type_to_core(binder_is_obj, b_ty),
+        ),
+        compile_ch_term_go(binder_is_obj, m4_ctx, b),
+      )
+    }
+    PTCase(s, l, r) => {
+      let s_ty = @m4.infer_ch_term(m4_ctx, s)
+      let (lty, rty) = match s_ty {
+        TSum(a, b) => (a, b)
+        _ =>
+          raise BridgeError::UnsupportedConstructInKernelBridge(
+            "PTCase scrutinee is not a sum type",
+          )
+      }
+      let ctx_l = m4_ctx.copy()
+      ctx_l.push(lty)
+      let ctx_r = m4_ctx.copy()
+      ctx_r.push(rty)
+      let res_l = @m4.infer_ch_term(ctx_l, l)
+      let res_r = @m4.infer_ch_term(ctx_r, r)
+      if res_l != res_r {
+        raise BridgeError::UnsupportedConstructInKernelBridge(
+          "PTCase branch result mismatch",
+        )
+      }
+      let next = binder_is_obj.copy()
+      next.push(false)
+      // Constant case motive: the common branch result type under the scrutinee binder (+1).
+      let motive = @m3.shift_core(
+        compile_ch_type_to_core(binder_is_obj, res_l),
+        1,
+        0,
+      )
+      CCase(
+        compile_ch_term_go(binder_is_obj, m4_ctx, s),
+        motive,
+        compile_ch_term_go(next, ctx_l, l),
+        compile_ch_term_go(next, ctx_r, r),
+      )
+    }
     _ =>
       raise BridgeError::UnsupportedConstructInKernelBridge(
         "Extended CHTerm eliminator",

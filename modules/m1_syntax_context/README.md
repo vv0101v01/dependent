@@ -25,6 +25,7 @@
 | 演算法名稱 | 所在檔案 | 時間複雜度 | 功能與硬體/數據結構優化說明 |
 | :--- | :--- | :--- | :--- |
 | 位元並行自由變數與依賴檢測引擎 (`is_closed`, `depends_on_var0`, `has_free_var`) | `syntax_bitmask.mbt` | $O(1)$（64 內層變數及任意閉項） | 單指令 64 位元遮罩位元與運算 + `max_free` 嚴格上界短路 |
+| 精確傳遞依賴查詢 (`lvl_depends_on`) | `context_matroid_operad.mbt` | 64 級內 $O(1)$；越窗 $O(d^2)$ 精確工作表掃描（遇窗即 $O(1)$ 短路） | 64-bit `trans_lvl_mask` 精確位元測試；64 層以上以 `has_free_var` 精確直接依賴工作表掃描，完全消除深層傳遞依賴假陰性 |
 | 嚴格化 $\sigma$-代換智慧複合與短路求值 (`subst_compose`, `apply_subst`) | `sigma_subst.mbt` | $O(1)$ 複合 / $O(1)$ 閉子樹跳過 | 消除 `Var(0)·Shift(1)=Id`、`Lift` 合併與 `is_identity_upto` 零拷貝短路 |
 | De Bruijn 索引 $\leftrightarrow$ 層級鏡像轉換與平坦望遠鏡查找 (`lookup_type_by_idx`) | `context_matroid_operad.mbt` | $O(1)$ 陣列定位 | 連續陣列儲存望遠鏡 + 鏡像對稱座標轉換 |
 | 單純形弱化與強化映射 (`simplicial_weaken_at`, `simplicial_strengthen_at`) | `context_matroid_operad.mbt` | $O(\|\Gamma\|)$ 遮罩檢測 | 利用每項預先計算之 `trans_lvl_mask` 於 $O(1)$ 判斷單步依賴阻斷 |
@@ -70,4 +71,4 @@
 - **類型與錯誤**：`SynKind`, `SynExpr`, `Subst`, `CtxEntry`, `Context`, `SyntaxArena`, `SyntaxError`。
 - **語法建構子**：`mk_var`, `mk_hole`, `mk_univ`, `mk_poly_univ`, `mk_prop_sort`, `mk_small_encode`, `mk_small_decode`, `mk_pi`, `mk_arrow`, `mk_lam`, `mk_app`, `mk_sigma`, `mk_pair`, `mk_fst`, `mk_snd`, `mk_unit_ty`, `mk_unit_val`, `mk_empty_ty`, `mk_absurd`, `mk_sum_ty`, `mk_inl`, `mk_inr`, `mk_case_sum`, `mk_nat_ty`, `mk_zero`, `mk_succ`, `mk_nat_rec`, `mk_id_ty`, `mk_refl`, `mk_j_elim`, `mk_squash_ty`, `mk_squash_intro`, `mk_const_ref`。
 - **代換與位元查詢**：`SynExpr::is_closed`, `SynExpr::depends_on_var0`, `SynExpr::has_free_var`, `shift_expr_simple`, `subst_id`, `subst_shift`, `subst_cons`, `subst_single`, `subst_lift`, `subst_compose`, `lookup_subst`, `apply_subst`, `try_strengthen_expr`。
-- **上下文、擬陣、操作子與駐留池**：`idx_to_lvl`, `lvl_to_idx`, `Context::empty`, `Context::extend_var`, `Context::extend_def`, `Context::lookup_type_by_idx`, `Context::lookup_entry_by_lvl`, `Context::lvl_depends_on`, `Context::simplicial_weaken_at`, `Context::simplicial_strengthen_at`, `Context::is_matroid_independent_set`, `Context::swap_adjacent_independent`, `Context::minimal_support_mask`, `operad_graft`, `SyntaxArena::new`, `SyntaxArena::intern`。
+- **上下文、擬陣、操作子與駐留池**：`idx_to_lvl`, `lvl_to_idx`, `Context::empty`, `Context::extend_var`, `Context::extend_def`, `Context::lookup_type_by_idx`, `Context::lookup_entry_by_lvl`, `Context::lvl_depends_on`, `Context::simplicial_weaken_at`, `Context::simplicial_strengthen_at`, `Context::is_matroid_independent_set`, `Context::swap_adjacent_independent`, `Context::minimal_support_mask`, `operad_graft`, `mk_bool_ty`, `mk_bool_lit`, `SyntaxArena::new`, `SyntaxArena::intern`。

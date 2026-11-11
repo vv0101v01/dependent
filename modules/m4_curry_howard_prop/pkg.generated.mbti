@@ -32,6 +32,8 @@ pub fn sequent_to_ch_term(SequentProof) -> CHTerm
 
 pub fn shift_ch_term(CHTerm, Int32, Int32) -> CHTerm
 
+pub fn shift_ch_term_obj(CHTerm, Int32, Int32) -> CHTerm
+
 pub fn shift_ch_type_obj(CHType, Int32, Int32) -> CHType
 
 pub fn shift_obj_term(ObjTerm, Int32, Int32) -> ObjTerm
@@ -60,6 +62,7 @@ pub suberror LogicError {
   ExpectedForallProof(CHType)
   ExpectedExistsProof(CHType)
   SquashEliminationIntoRelevantType(CHType)
+  WitnessLeakInExistsElim(CHType)
   InvalidSequentRule(String)
 }
 
