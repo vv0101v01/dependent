@@ -30,11 +30,11 @@
 | 模組 | 涵蓋概念 | 關鍵演算法與硬體位元／記憶體優化 |
 | :--- | :--- | :--- |
 | `dtt/m1_syntax_context` | 類型、項、上下文 | 64-bit `occ_mask`/`slot_mask`/`hash64` $O(1)$ 快篩、DAG `SyntaxArena`、顯式 $\sigma$-代換、反擬陣、Operad |
-| `dtt/m2_universe_cumul` | 宇宙、累積宇宙 | $(0,+1,\max)$ 標準形、Fuss-Free $\Downarrow_i/\Uparrow_i$、64-bit 可達快篩 + Tarjan SCC + SPFA、Ramsey 分層 |
+| `dtt/m2_universe_cumul` | 宇宙、累積宇宙 | $(0,+1,\max)$ 標準形、Fuss-Free $\Downarrow_i/\Uparrow_i$、64-bit 可達快篩 + Tarjan SCC + SPFA、Ramsey 分層與 König 精確反鏈寬度 |
 | `dtt/m3_pi_sigma_types` | 判斷、$\Pi$、$\Sigma$ | Kripke 域求值與 $\eta$-回引 NbE（$O(1)$ `d - 1 - l`）、雙向檢驗、柯里化與 Skolem 選擇同構 |
-| `dtt/m4_curry_howard_prop` | 柯里-霍華德、命題即類型 | 公式$\leftrightarrow$類型雙向同構、Squash 守衛、Gentzen 切消元、CPS 古典合成、認證抹除提取 |
+| `dtt/m4_curry_howard_prop` | 柯里-霍華德、命題即類型 | 公式$\leftrightarrow$類型雙向同構、Squash／無 UIP-K `Id`／存在見證洩漏三重守衛、Gentzen 切消元、置換交換律與 $\eta$ 正規化、CPS 古典合成、認證抹除提取 |
 | `dtt/m5_fibration_kan` | 纖維化、Kan 擴張、層黏合 | 劈裂重索引、$\Sigma/\Pi$ 左右 Kan 擴張、語境纖維積／理論推出、Beck-Chevalley 檢驗 |
-| `dtt/m6_chu_galois_bridge` | Chu 對偶、Morita、局部化、博弈 | 64-bit Chu 空間、M4$\to$M3 統一索引編譯器、張量—直和分配、Monad 分配律、局部化屋頂 |
+| `dtt/m6_chu_galois_bridge` | Chu 對偶、Morita、局部化、博弈 | 64-bit Chu 空間、M4$\to$M3 統一索引編譯器（含析取 case、Bool 與空類型）、張量—直和分配（$\beta\eta$ 往返恆等）、Monad 分配律、局部化屋頂 |
 | `dtt/m7_unified_kernel` | 第一階段大一統核心 | 累積／非累積雙模態認證、語境反擬陣半直積、伸縮短正合序列分裂截面合成 |
 | `dtt/m8_inductive_family` | 嚴格正歸納、IR、II | 64-bit `sp_param_mask` 巢狀稀疏參數化、Dybjer-Setzer IR 同時解碼、II 遞歸-遞歸消元、$W$-摺疊 |
 | `dtt/m9_coalgebra_stream` | 共同代數與無窮流 | 迭代安全無窮流、Cauchy 卷積與導數、餘模式字典樹、時鐘守護信用、並查集 $O(N\alpha(N))$ 無限雙模擬 |

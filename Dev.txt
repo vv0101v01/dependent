@@ -8,7 +8,8 @@
    - 安裝最新穩定版 MoonBit 工具鏈並調研最新語法與依賴類型論前沿論文。
    - 完整實作附件一《工作內容依賴類型論01.md》十大核心概念（`M1..M7`）：
      類型、項、判斷、上下文、依賴函數類型 (Π)、依賴乘積類型 (Σ)、宇宙、累積宇宙、柯里-霍華德對應、命題即類型。
-2. 第二輪指令（本輪執行）：
+2. 第三輪指令（本輪執行）：用戶第一輪審計判定 27 條定理中有 7 條不成立（含反例、窮舉反例、欄位名不副實與邏輯錯），命令對全代碼執行健檢、除錯、去重、減債、清死碼，修復後重新推送至 `https://github.com/vv0101v01/dependent`。具體 15 項缺陷清單見「五、第三輪錯誤分析與修復紀錄」。
+3. 第二輪指令（已於上輪完成）：
    - 將第一階段成果推送至 `https://github.com/vv0101v01/dependent`（已完成初始推送 `7bcc3ae`，全程未將憑證寫入任何檔案或 `.git/config`）。
    - 執行附件二《工作內容依賴類型論02.md》開發工程，完整實作九大進階概念：
      (11) 歸納-遞歸類型 (Inductive-Recursive Types)
@@ -75,9 +76,61 @@
   十九大依賴類型論概念統一註冊、精化、認證、雙模擬駐留與跨階段全域不變量遙測系統 `Phase2UnifiedSystem`。配置完整 4 節 `README.md`。
 
 ================================================================================
+五、第三輪錯誤分析與修復紀錄（用戶審計 15 項缺陷 → 全部修復並驗證）
+================================================================================
+【修復對應根因與變更】
+1. (M1, 高) 64 層以上傳遞依賴假陰性：`Context::lvl_depends_on` 原僅對 `earlier < 64` 用遮罩、
+   越窗時只查直接依賴。重寫為雙模式精確查詢：兩層皆 < 64 時 O(1) 遮罩位元測試；越窗時以
+   `has_free_var` 精確直接依賴做工作表掃描（`ctx_entry_direct_dep`，含 `extend_def` 值依賴），
+   掃描回落 64 級窗口時立即以精確遮罩短路。驗證：66 級鏈 `lvl_depends_on(65, 0) == true`、
+   橋接鏈 `lvl_depends_on(66, 0) == true`、獨立語境全 false。
+2. (M2, 中) `max_antichain_width` 名不副實（原回傳最大 Mirsky 層大小）：依 Dilworth–König 定理
+   於可比較性二部圖（嚴格序傳遞閉包）上實作增廣路最大匹配，`width = n − ν_max` 給出精確最大
+   反鏈寬度；Mirsky 層分解保留並按「起點最長鏈秩」文檔化。驗證：5 變數偏序（y<c, d<c, z<d）
+   窮舉 32 子集得精確寬度 3 > 最大 Mirsky 層 2，兩者一致吻合。
+3. (M4, critical) 存在消元見證洩漏：`PTUnpack` 原以 `shift_ch_type_obj(res, -1, 1)` 錯誤保留
+   索引 0（見證槽）。新增 `ch_type_has_obj_var` / `obj_term_has_var` 精確物件變數出現檢查，
+   見證自由出現於結論時 raise `LogicError::WitnessLeakInExistsElim`；通過側條件後以 cutoff 0
+   嚴格強化。驗證：`Id(x,x)` 結論被拒、`Unit` 結論通過。
+4. (M4, critical) 無 UIP/K 下不當證明無關：`is_prop_irrelevant` 移除 `TId`（恆等類型非證明
+   無關），`PTLetSquash` 消元入 `Id` 被拒、入 `Unit` 仍通過。
+5. (M5, 高) `PolyUniv(7,3)` 橋接丟失語義：M3 `CoreTm`/`Val` 新增 `CPolyUniv(v,o)`/`VPolyUniv(v,o)`
+   （`check_is_type` 給 `(VPolyUniv, o+1)`、`synth` 給 `VUniv(o+1)`、轉換判定嚴格區分於
+   `CUniv(3)`），M5 橋接改為無損映射。
+6. (M5, 中) Pair 動機丟失：`CPair` 擴為三元（第三欄為綁定 var 0 = 配對本身之 Σ-動機），
+   `VPair` 有類型回讀重構真動機、無類型回讀用佔位註記；`CRefl` 同步擴為二元（類型註記）。
+   M3 內部柯里化／Skolem 典範配對補上真實動機；M5 橋接嚴格往返恆等。
+7. (M6/M5/M3, 高) 析取類型核心覆蓋缺口（一次修復 #7/#10/#13/#15）：M3 新增和類型全套
+   `CSum/CInl/CInr/CCase`（`VSum/VInl/VInr` 攜帶和類型、`SECase` 型向 spine、
+   `case_val` ι-消元、雙向 check/synth、quote 全臂）與 `CEmpty/CAbsurd`、`CBool/CBoolLit`；
+   M5 橋接補齊 `SumTy/Inl/Inr/CaseSum/EmptyTy/Absurd/BoolTy` 無損映射；
+   M6 編譯器支援 `TSum`/`TEmpty`/`Bool` 排序與字面量、`PTCase`（攜行 M4 證明語境經
+   `infer_ch_term` 恢復共同分支結果類型為常數 case-動機）、`PTInl`/`PTInr`/`PTAbsurd`。
+8. (M4, 中) 張量—直和往返恆等：`normalize_ch_term` 新增 case-unpack 置換交換律、
+   case-配對（`PTPair`/`PTPack` 頭部一致）置換交換律、和類型 η、存在 η 四條規則；
+   中性輸入往返正規化嚴格化簡至 `PTVar(0)`，且析取交換律不被誤摺疊。
+9. (M7, 高) `analyze_telescope_exact_sequence` 無效輸入：新增 `KernelError::InvalidBaseLength`
+   強制 `0 <= base_len <= |Γ|`。
+10. (M7, 高) 分裂截面不健全：新增 `FiberDefaultCountMismatch`（每纖維恰一預設）與
+   `NonClosedFiberDefault`（預設必須為閉項）驗證。
+11. (M6, 高) 一階排序覆蓋：`compile_sort_to_core` 支援 `Bool`，物件字面量 `true`/`false`。
+12. (去重/清死碼) 刪除 M8 `ir_decode_generic` 半成品樁（其 IRDelta 臂恆 raise）；
+    M7 `syn_may_occur` 改為委派 M1 精確 `has_free_var`（消除 idx>=64 保守過近似之重複實現）；
+    刪除 M1 `mk_arrow` 中計算後棄用之 `shifted_mask`/`shifted_mf` 死碼。
+13. (文檔) M1..M8 與根／模組 README 之定理表述、演算法表與 API 清單同步精確化
+    （M2.T3 精確寬度、M3.A1/D1 和類型與 Bool 與 zeta 反射、M4.T1 三重守衛、
+    M5.D1 無損橋接、M6.T1/T2 覆蓋與往返、M7.T4 輸入驗證、M8 API 清單去樁）。
+
+【驗證方式（即寫即驗即刪）】
+- 對 m1..m7 各寫一個臨時 `*_wbtest.mbt`（`assert_eq`/`assert_true`/`assert_false` + try/catch），
+  以 `moon test -p dtt/<pkg>` 逐一通過後立即刪除；`find -name "*test*.mbt"` 歸零。
+- 本輪工具鏈行為備忘：本 `moonc` 版本 wbtest 中 `f!(..)` 巨集調用（`inspect!`/`assert_eq!`）
+  解析報錯 `[3002] unexpected f!(..)`，須改用普通函數 `assert_eq`/`assert_true`/`assert_false`。
+
+================================================================================
 四、未完成事項與待定事項
 ================================================================================
-- 未完成事項：無（附件一十大概念與附件二九大概念共十九大依賴類型論概念、十四大模組、所有資料夾 4 節 README、全局零警告 CI 檢驗、Git 提交與遠端推送均已完成）。
+- 未完成事項：無（十九大概念、十四大模組、第三輪用戶審計 15 項缺陷修復、所有資料夾 4 節 README、全局零警告 CI 檢驗、Git 提交與遠端推送均已完成）。
 - 待定事項（供未來第三階段擴展參考）：
   1. 立方類型論（Cubical Type Theory：區間類型 `𝕀`、De Morgan 代數、Kan `transp`/`hcomp`、Glue 類型與計算性單價公理 Univalence）。
   2. 模態同倫類型論（Cohesive / Spatial / Crisp Modal HoTT）與表面語法雙向精化前端（Concrete Parser + Pretty Printer）。
