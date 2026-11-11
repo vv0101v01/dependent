@@ -1,0 +1,60 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m14_phase2_unified_system"
+
+import {
+  "dtt/m10_affine_quant_types",
+  "dtt/m11_polymorphism_coercion_nom",
+  "dtt/m2_universe_cumul",
+  "dtt/m3_pi_sigma_types",
+  "dtt/m7_unified_kernel",
+  "dtt/m8_inductive_family",
+  "dtt/m9_coalgebra_stream",
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+pub(all) suberror Phase2KernelError {
+  UnknownRegisteredStream(String)
+}
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct Phase2Telemetry {
+  phase1_telemetry : @m7_unified_kernel.KernelTelemetry
+  certified_inductive_count : Int32
+  localized_stream_count : Int32
+  certified_qtt_count : Int32
+  active_rewrite_rules : Int32
+  alg_coalg_chu_verified : Bool
+  coercion_diamond_coherent : Bool
+  nominal_isolation_verified : Bool
+}
+pub fn Phase2Telemetry::equal(Self, Self) -> Bool
+pub fn Phase2Telemetry::not_equal(Self, Self) -> Bool
+pub fn Phase2Telemetry::to_repr(Self) -> @debug.Repr
+
+pub struct Phase2UnifiedSystem {
+  phase1 : @m7_unified_kernel.UnifiedKernel
+  sp_masks : Map[String, UInt64]
+  mut certified_inductives : Int32
+  stream_arena_ids : Map[String, Int32]
+  qtt_programs : Array[(String, @m10_affine_quant_types.RuntimeTerm)]
+  rewrite_rules : Array[@m11_polymorphism_coercion_nom.ImplicitRewriteRule]
+  meta_store : @m11_polymorphism_coercion_nom.MetaStore
+  coercions : @m11_polymorphism_coercion_nom.CoercionEnv
+}
+pub fn Phase2UnifiedSystem::add_coherent_prim_coercion(Self, String, String, (Int32) -> Int32, Array[Int32]) -> Unit raise
+pub fn Phase2UnifiedSystem::add_verified_rewrite_rule(Self, @m11_polymorphism_coercion_nom.ImplicitRewriteRule) -> Unit raise
+pub fn Phase2UnifiedSystem::are_streams_bisimilar_o1(Self, String, String) -> Bool raise Phase2KernelError
+pub fn Phase2UnifiedSystem::certify_ir_and_ii(Self, @m8_inductive_family.IRUni, @m8_inductive_family.IICtx, @m8_inductive_family.IITy) -> (Int32, @m3_pi_sigma_types.CoreTm) raise
+pub fn Phase2UnifiedSystem::collect_phase2_telemetry(Self) -> Phase2Telemetry raise
+pub fn Phase2UnifiedSystem::elaborate_and_certify_qtt(Self, String, @m11_polymorphism_coercion_nom.ElabTm, @m11_polymorphism_coercion_nom.ElabTm, @m11_polymorphism_coercion_nom.ElabTm, @m10_affine_quant_types.Grade) -> (@m10_affine_quant_types.QTerm, @m10_affine_quant_types.RuntimeTerm) raise
+pub fn Phase2UnifiedSystem::new(@m2_universe_cumul.HierarchyMode) -> Self
+pub fn Phase2UnifiedSystem::register_inductive(Self, @m8_inductive_family.InductiveDecl) -> @m8_inductive_family.CertifiedInductiveSummary raise
+pub fn Phase2UnifiedSystem::register_productive_stream(Self, String, Array[Array[@m9_coalgebra_stream.CopatObs]], @m9_coalgebra_stream.CorecStreamExpr, @m9_coalgebra_stream.FiniteStreamAutomaton) -> Int32 raise
+
+// Type aliases
+
+// Traits

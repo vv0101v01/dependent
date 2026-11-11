@@ -1,0 +1,176 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m8_inductive_family"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn[S, R] cata_w((S, Array[R]) -> R, WTree[S]) -> R
+
+pub fn check_ii_ctx(IICtx) -> Unit raise InductiveError
+
+pub fn check_ii_ty(IICtx, IITy) -> Unit raise InductiveError
+
+pub fn check_strict_positivity(InductiveDecl, Map[String, UInt64]) -> CertifiedInductiveSummary raise InductiveError
+
+pub fn[CVal, TVal] ii_elim_ctx(IICtx, CVal, (CVal, TVal) -> CVal, (CVal, Int32) -> TVal, (CVal, TVal, TVal) -> TVal, (CVal, TVal, TVal) -> TVal) -> CVal
+
+pub fn[CVal, TVal] ii_elim_ty(IITy, CVal, CVal, (CVal, TVal) -> CVal, (CVal, Int32) -> TVal, (CVal, TVal, TVal) -> TVal, (CVal, TVal, TVal) -> TVal) -> TVal
+
+pub fn ii_ty_ctx(IITy) -> IICtx
+
+pub fn ir_check_and_decode_card(IRUni) -> Int32 raise InductiveError
+
+pub fn[D] ir_decode_generic(IRCode[D], IRNode) -> D raise InductiveError
+
+pub fn[D] ir_decode_with_root(IRCode[D], IRCode[D], IRNode) -> D raise InductiveError
+
+pub fn[S] w_tree_height(WTree[S]) -> Int32
+
+// Errors
+pub(all) suberror InductiveError {
+  NonStrictlyPositiveSelf(String, Int32)
+  SelfInNestedNonSPPosition(String, String, Int32)
+  SelfInIndexArgument(String, Int32)
+  UnknownNestedContainer(String)
+  ConstructorArityOverflow(Int32)
+  InductiveInductiveIndexMismatch(String)
+  InductiveRecursiveDomainError(String)
+}
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct CertifiedCtorSummary {
+  name : String
+  arity : Int32
+  rec_arg_mask : UInt64
+  nested_rec_mask : UInt64
+  sparse_ih_count : Int32
+}
+pub fn CertifiedCtorSummary::equal(Self, Self) -> Bool
+pub fn CertifiedCtorSummary::is_leaf(Self) -> Bool
+pub fn CertifiedCtorSummary::not_equal(Self, Self) -> Bool
+pub fn CertifiedCtorSummary::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct CertifiedInductiveSummary {
+  name : String
+  sp_param_mask : UInt64
+  param_polarities : Array[ParamPolarity]
+  ctor_summaries : Array[CertifiedCtorSummary]
+}
+pub fn CertifiedInductiveSummary::equal(Self, Self) -> Bool
+pub fn CertifiedInductiveSummary::not_equal(Self, Self) -> Bool
+pub fn CertifiedInductiveSummary::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum IICtx {
+  IINil
+  IISnoc(IICtx, IITy)
+}
+pub fn IICtx::equal(Self, Self) -> Bool
+pub fn IICtx::not_equal(Self, Self) -> Bool
+pub fn IICtx::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum IITy {
+  IIBase(IICtx, Int32)
+  IIPi(IICtx, IITy, IITy)
+  IISigma(IICtx, IITy, IITy)
+}
+pub fn IITy::equal(Self, Self) -> Bool
+pub fn IITy::not_equal(Self, Self) -> Bool
+pub fn IITy::to_repr(Self) -> @debug.Repr
+
+pub(all) enum IRCode[D] {
+  IRIota(D)
+  IRSigma(Int32, (Int32) -> IRCode[D])
+  IRDelta(Int32, ((Int32) -> D) -> IRCode[D])
+}
+
+pub(all) enum IRNode {
+  IREnd
+  IRTag(Int32, IRNode)
+  IRBranch(Array[IRNode], IRNode)
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) enum IRUni {
+  UFin(Int32)
+  USigmaIR(IRUni, Array[IRUni])
+  UPiIR(IRUni, Array[IRUni])
+}
+pub fn IRUni::equal(Self, Self) -> Bool
+pub fn IRUni::not_equal(Self, Self) -> Bool
+pub fn IRUni::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct InductiveCtorDecl {
+  name : String
+  arg_types : Array[SPTypeExpr]
+  result_indices : Array[SPTypeExpr]
+}
+pub fn InductiveCtorDecl::equal(Self, Self) -> Bool
+pub fn InductiveCtorDecl::not_equal(Self, Self) -> Bool
+pub fn InductiveCtorDecl::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct InductiveDecl {
+  name : String
+  num_params : Int32
+  ctors : Array[InductiveCtorDecl]
+}
+pub fn InductiveDecl::equal(Self, Self) -> Bool
+pub fn InductiveDecl::not_equal(Self, Self) -> Bool
+pub fn InductiveDecl::to_repr(Self) -> @debug.Repr
+
+#derive(Compare, Eq, Hash, @debug.Debug)
+pub(all) enum ParamPolarity {
+  Unused
+  StrictlyPositive
+  Positive
+  Negative
+  Mixed
+}
+pub fn ParamPolarity::compare(Self, Self) -> Int32
+pub fn ParamPolarity::equal(Self, Self) -> Bool
+pub fn ParamPolarity::hash(Self) -> Int32
+pub fn ParamPolarity::hash_combine(Self, Hasher) -> Unit
+pub fn ParamPolarity::join(Self, Self) -> Self
+pub fn ParamPolarity::negate_left_of_arrow(Self) -> Self
+pub fn ParamPolarity::not_equal(Self, Self) -> Bool
+pub fn ParamPolarity::op_ge(Self, Self) -> Bool
+pub fn ParamPolarity::op_gt(Self, Self) -> Bool
+pub fn ParamPolarity::op_le(Self, Self) -> Bool
+pub fn ParamPolarity::op_lt(Self, Self) -> Bool
+pub fn ParamPolarity::output(Self, &Logger) -> Unit
+pub fn ParamPolarity::to_repr(Self) -> @debug.Repr
+pub fn ParamPolarity::to_string(Self) -> String
+pub impl Show for ParamPolarity
+
+#derive(Eq, @debug.Debug)
+pub(all) enum SPTypeExpr {
+  SPConst(String)
+  SPParam(Int32)
+  SPSelf(Array[SPTypeExpr])
+  SPProd(SPTypeExpr, SPTypeExpr)
+  SPSum(SPTypeExpr, SPTypeExpr)
+  SPArrow(SPTypeExpr, SPTypeExpr)
+  SPNestedApp(String, Array[SPTypeExpr])
+}
+pub fn SPTypeExpr::equal(Self, Self) -> Bool
+pub fn SPTypeExpr::not_equal(Self, Self) -> Bool
+pub fn SPTypeExpr::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum WTree[S] {
+  WSup(S, Array[WTree[S]])
+}
+pub fn[S : Eq] WTree::equal(Self[S], Self[S]) -> Bool
+pub fn[S : Eq] WTree::not_equal(Self[S], Self[S]) -> Bool
+pub fn[S : @debug.Debug] WTree::to_repr(Self[S]) -> @debug.Repr
+
+// Type aliases
+
+// Traits

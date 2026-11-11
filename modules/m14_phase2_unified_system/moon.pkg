@@ -1,0 +1,16 @@
+import {
+  "moonbitlang/core/debug",
+  "dtt/m1_syntax_context" @m1,
+  "dtt/m2_universe_cumul" @m2,
+  "dtt/m3_pi_sigma_types" @m3,
+  "dtt/m4_curry_howard_prop" @m4,
+  "dtt/m5_fibration_kan" @m5,
+  "dtt/m6_chu_galois_bridge" @m6,
+  "dtt/m7_unified_kernel" @m7,
+  "dtt/m8_inductive_family" @m8,
+  "dtt/m9_coalgebra_stream" @m9,
+  "dtt/m10_affine_quant_types" @m10,
+  "dtt/m11_polymorphism_coercion_nom" @m11,
+  "dtt/m12_initial_final_duality" @m12,
+  "dtt/m13_qtt_elaboration_bridge" @m13,
+}

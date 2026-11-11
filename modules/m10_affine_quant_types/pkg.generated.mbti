@@ -1,0 +1,146 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m10_affine_quant_types"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn check_qterm_raw(Array[QCtxEntry], QTerm, QTerm) -> UsageVec64 raise QTTError
+
+pub fn check_qtype(Array[QCtxEntry], QTerm) -> Int32 raise QTTError
+
+pub fn erase_qtt_term(QTerm) -> RuntimeTerm
+
+pub fn normalize_qterm(QTerm) -> QTerm
+
+pub fn shift_qterm(QTerm, Int32, Int32) -> QTerm
+
+pub fn subst_qterm(QTerm, Int32, QTerm) -> QTerm
+
+pub fn synth_qterm_raw(Array[QCtxEntry], QTerm) -> (QTerm, UsageVec64) raise QTTError
+
+pub fn verify_qtt_judgment(Array[QCtxEntry], QTerm) -> (QTerm, UsageVec64) raise QTTError
+
+// Errors
+pub(all) suberror QTTError {
+  ContextVariableOverflow(Int32)
+  UnboundQVar(Int32)
+  ZeroGradeVariableUsedAtRuntime(Int32)
+  ResourceSubsumptionViolation(String, Grade, Grade)
+  ExpectedTypeSort(QTerm)
+  ExpectedGradedPi(QTerm)
+  ExpectedGradedSigma(QTerm)
+  ExpectedAdditiveWith(QTerm)
+  GradeAnnotationMismatch(Grade, Grade)
+  QTypeMismatch(QTerm, QTerm)
+}
+
+// Types and methods
+#derive(Compare, Eq, Hash, @debug.Debug)
+pub(all) enum Grade {
+  GZero
+  GOne
+  GAffine
+  GOmega
+}
+pub fn Grade::add(Self, Self) -> Self
+pub fn Grade::additive_join(Self, Self) -> Self
+pub fn Grade::compare(Self, Self) -> Int32
+pub fn Grade::equal(Self, Self) -> Bool
+pub fn Grade::from_bits(UInt64) -> Self
+pub fn Grade::hash(Self) -> Int32
+pub fn Grade::hash_combine(Self, Hasher) -> Unit
+pub fn Grade::mul(Self, Self) -> Self
+pub fn Grade::not_equal(Self, Self) -> Bool
+pub fn Grade::op_ge(Self, Self) -> Bool
+pub fn Grade::op_gt(Self, Self) -> Bool
+pub fn Grade::op_le(Self, Self) -> Bool
+pub fn Grade::op_lt(Self, Self) -> Bool
+pub fn Grade::output(Self, &Logger) -> Unit
+pub fn Grade::residuated_sub(Self, Self) -> Self?
+pub fn Grade::subsumed_by(Self, Self) -> Bool
+pub fn Grade::to_bits(Self) -> UInt64
+pub fn Grade::to_repr(Self) -> @debug.Repr
+pub fn Grade::to_string(Self) -> String
+pub impl Show for Grade
+
+#derive(Eq, @debug.Debug)
+pub(all) struct QCtxEntry {
+  name : String
+  grade : Grade
+  ty : QTerm
+}
+pub fn QCtxEntry::equal(Self, Self) -> Bool
+pub fn QCtxEntry::not_equal(Self, Self) -> Bool
+pub fn QCtxEntry::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum QTerm {
+  QVar(Int32)
+  QUniv(Int32)
+  QUnitTy
+  QUnitVal
+  QBoolTy
+  QBoolVal(Bool)
+  QIf(QTerm, QTerm, QTerm, QTerm)
+  QPi(Grade, String, QTerm, QTerm)
+  QLam(Grade, String, QTerm, QTerm)
+  QApp(Grade, QTerm, QTerm)
+  QSigma(Grade, String, QTerm, QTerm)
+  QTensorPair(Grade, QTerm, QTerm, QTerm)
+  QLetPair(Grade, QTerm, QTerm, QTerm)
+  QWith(QTerm, QTerm)
+  QWithPair(QTerm, QTerm)
+  QWithFst(QTerm)
+  QWithSnd(QTerm)
+  QId(QTerm, QTerm, QTerm)
+  QRefl(QTerm, QTerm)
+}
+pub fn QTerm::equal(Self, Self) -> Bool
+pub fn QTerm::not_equal(Self, Self) -> Bool
+pub fn QTerm::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum RuntimeTerm {
+  RVar(Int32)
+  RErasedBox
+  RUnit
+  RBool(Bool)
+  RIf(RuntimeTerm, RuntimeTerm, RuntimeTerm)
+  RLam(RuntimeTerm)
+  RApp(RuntimeTerm, RuntimeTerm)
+  RPair(RuntimeTerm, RuntimeTerm)
+  RLetPair(RuntimeTerm, RuntimeTerm)
+  RFst(RuntimeTerm)
+  RSnd(RuntimeTerm)
+}
+pub fn RuntimeTerm::equal(Self, Self) -> Bool
+pub fn RuntimeTerm::not_equal(Self, Self) -> Bool
+pub fn RuntimeTerm::to_repr(Self) -> @debug.Repr
+
+#derive(Compare, Eq, Hash, @debug.Debug)
+pub(all) struct UsageVec64 {
+  bits : UInt64
+}
+pub fn UsageVec64::add(Self, Self) -> Self
+pub fn UsageVec64::additive_join(Self, Self) -> Self
+pub fn UsageVec64::clear_slot(Self, Int32) -> Self
+pub fn UsageVec64::compare(Self, Self) -> Int32
+pub fn UsageVec64::equal(Self, Self) -> Bool
+pub fn UsageVec64::get(Self, Int32) -> Grade
+pub fn UsageVec64::hash(Self) -> Int32
+pub fn UsageVec64::hash_combine(Self, Hasher) -> Unit
+pub fn UsageVec64::not_equal(Self, Self) -> Bool
+pub fn UsageVec64::op_ge(Self, Self) -> Bool
+pub fn UsageVec64::op_gt(Self, Self) -> Bool
+pub fn UsageVec64::op_le(Self, Self) -> Bool
+pub fn UsageVec64::op_lt(Self, Self) -> Bool
+pub fn UsageVec64::scale(Self, Grade) -> Self
+pub fn UsageVec64::singleton(Int32, Grade) -> Self raise QTTError
+pub fn UsageVec64::to_repr(Self) -> @debug.Repr
+pub fn UsageVec64::zero() -> Self
+
+// Type aliases
+
+// Traits

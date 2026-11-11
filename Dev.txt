@@ -4,83 +4,80 @@
 ================================================================================
 一、用戶指令與核心工程規範紀錄
 ================================================================================
-1. 首次開發任務（`首次開發`）：
-   - 下載最新穩定版 MoonBit 工具鏈並上網搜尋最新語法規範。
-   - 上網搜尋依賴類型論（Dependent Type Theory）前沿論文並深入推導。
-   - 嚴格在指定工作區（`/home/user`）內工作。
-   - 完整實作《工作內容依賴類型論01.md》十大核心概念：
-     (1) 類型 (Type)
-     (2) 項 (Term)
-     (3) 判斷 (Judgment)
-     (4) 上下文 (Context)
-     (5) 依賴函數類型 (Π-Type)
-     (6) 依賴乘積類型 (Σ-Type / Dependent Pair)
-     (7) 宇宙 (Universe U_i)
-     (8) 累積宇宙 (Cumulative Universe U_i ≼ U_j, ⇓_i / ⇑_i)
-     (9) 柯里-霍華德對應 (Curry-Howard Correspondence)
-     (10) 命題即類型 (Propositions-as-Types)
-2. 工程與數學約束（《工程約束.md》、《作業規範.md》、《組合範例.md》）：
-   - `AGENT.md` 必須與 `/home/user/uploads/工程約束.md` 逐位元組完全一致，嚴禁自創規則。
-   - `Dev.txt` 每輪持續更新，紀錄用戶指令、已完成與未完成事項、網路搜尋與論文重點、待定與已定決策。
-   - 測試規範：嚴禁保留白盒、黑盒或冒煙測試集；採取本地編譯測試搭配 `inspect`/`debug_inspect`——「即寫測試題，即驗，即刪除測試題」；回合結束前執行全局 CI 級編譯檢驗（`moon fmt --check`、`moon check --deny-warn`、`moon build`）並執行 `git commit`。
-   - 編譯與測試指令嚴禁使用 `--release`；沙盒內無需執行基準測試（`moon bench`）。
-   - 每個資料夾必須配置 `README.md`，包含：(1) 資料夾內已獲得之定理列表，(2) 資料夾內已實作之演算法列表，(3) 以該資料夾為視角之依賴關係圖，(4) 資料夾內動線及接入與輸出接口。
-   - 架構組織：先將數學概念分組建立零外部依賴之獨立基礎模組，再透過範疇論與代數方式（聯合、合併、組合、橋接、依賴、嵌入、融合）組合成上層模組與統一核心。
-   - 全域公理：伽羅瓦對應（Galois Correspondence）；局部公理：邏輯消元（Logical Elimination）。
-   - 演算法目標：高階 O(1) 常數時間位元／雜湊優化、多項式複雜度類 P 完備演算法，以及硬體位元級、數據結構、序列與記憶體多功能演算法。
+1. 第一輪指令（已完成並推送至遠端倉庫 `https://github.com/vv0101v01/dependent`）：
+   - 安裝最新穩定版 MoonBit 工具鏈並調研最新語法與依賴類型論前沿論文。
+   - 完整實作附件一《工作內容依賴類型論01.md》十大核心概念（`M1..M7`）：
+     類型、項、判斷、上下文、依賴函數類型 (Π)、依賴乘積類型 (Σ)、宇宙、累積宇宙、柯里-霍華德對應、命題即類型。
+2. 第二輪指令（本輪執行）：
+   - 將第一階段成果推送至 `https://github.com/vv0101v01/dependent`（已完成初始推送 `7bcc3ae`，全程未將憑證寫入任何檔案或 `.git/config`）。
+   - 執行附件二《工作內容依賴類型論02.md》開發工程，完整實作九大進階概念：
+     (11) 歸納-遞歸類型 (Inductive-Recursive Types)
+     (12) 歸納-歸納類型 (Inductive-Inductive Types)
+     (13) 嚴格正歸納類型 (Strictly Positive Inductive Types)
+     (14) 共同代數與無窮流 (Coalgebras & Infinite Streams)
+     (15) 仿射與量化類型 (Affine & Quantitative Types, QTT)
+     (16) 依賴多型性 (Dependent Polymorphism)
+     (17) 隱含參數重寫 (Implicit Argument Elaboration & Rewriting)
+     (18) 型別強制轉換 (Coercive Subtyping)
+     (19) 結構型別與名義型別 (Structural vs Nominal Types)
+3. 嚴格遵守《AGENT.md》（《工程約束.md》）、《作業規範.md》與《組合範例.md》：
+   - 中繼開發嚴禁重測上手已通過驗證之模組（`M1..M7` 保持原樣零改動、零重測）。
+   - 新增模組採取「即寫測試題 + `inspect`/`debug_inspect`，即驗，即刪除測試題」；嚴禁使用 `--release`；不建立未經准許之獨立雜項文檔；更新 `Dev.txt` 並為每個新資料夾配置 4 節 `README.md`。
+   - 全域公理：伽羅瓦對應；局部公理：邏輯消元。
+   - 回合結束前執行全局 CI 零警告編譯檢驗（`moon fmt --check`, `moon check --deny-warn`, `moon build`）、`git commit` 並推送至遠端倉庫。
 
 ================================================================================
-二、網路搜尋與前沿論文調研成果（2024–2026）
+二、網路搜尋與前沿論文調研成果（Phase 1 + Phase 2，2024–2026）
 ================================================================================
-1. MoonBit 最新工具鏈與語法（2026-11 穩定版）：
-   - 已安裝 `moon 0.1.20261104` / `moonc v0.10.20+65efd5b93` 於 `/home/user/.moon`。
-   - 最新專案配置已全面轉向宣告式 `moon.work`、`moon.mod`、`moon.pkg`（舊式 `moon.mod.json`/`moon.pkg.json` 已棄用）。
-   - 局部類型派生與實作 trait 需顯式宣告 `pub extend Type with Trait::{ ... }` 以完全通過 `moon check --deny-warn`（消除 `[0079]` 警告）；自訂輸出實作 `pub impl Show for T with output(self, logger)`（消除 `derive(Show)` `[0027]` 棄用警告）；空映射使用 `Map([])`（消除 `[0082]` 歧義大括號警告）。
-2. 依賴類型論前沿論文重點：
-   - Sterbac & Sterling (2026-11, arXiv:2607.11329, POPL '27)《Fuss-free cumulative universes: theory and practice》：
-     以合成小性判斷 `Γ ⊢ A small_i`、編碼算子 `⇓_i A : U_i`、解碼算子 `⇑_i M type`、β 規則 `⇑_i(⇓_i A) = A` 及外延單射規則取代傳統顯式 Lift 自然性公理簇，導出無煩擾累積提升 `↑_i^j M := ⇓_j(⇑_i M)`。
-   - Jiang, Hu, Oliveira (ICFP 2025, DOI 10.1145/3747508)《Normalization by Evaluation for Non-cumulativity》：
-     語義域採用 De Bruijn 層級（Level）、語法採用 De Bruijn 索引（Index），以 O(1) 算術 `d - 1 - l` 實作回引，統一支援非累積唯一性與累積宇宙階層。
-   - Sozeau & Bezem (TYPES 2025 / RocqPL 2026)《Algebraic Universes and Variances For All》：
-     完整代數宇宙 `(0, +1, max)` 多項式時間約束求解、強連通分量縮點、差分圖最短／最長路循環檢測與型變（Irrelevant / Covariant / Invariant）複合。
-   - Kaposi & Pujet (ICFP 2025, DOI 10.1145/3747535)《Type Theory in Type Theory using a Strictified Syntax》：
-     嚴格化顯式 σ-代換演算（`id`, `shift`, `cons`, `cmp`）代數正規化與結合律恆等式。
-   - Trotta, Weinberger, de Paiva (2024, arXiv:2407.15765) & TAC 2025：
-     Grothendieck 理解纖維化、劈裂重索引與左右 Kan 擴張伴隨三元組 `Σ_u ⊣ u* ⊣ Π_u`、Beck-Chevalley 同構及依賴 Skolem 選擇同構。
-   - Pratt Chu Spaces & Awodey (2024)：
-     Chu 空間 `(A, r : A × X -> 2, X)` 自對偶矩陣與語法—語義反變伽羅瓦伴隨。
+1. MoonBit 穩定版工具鏈與語法（`moon 0.1.20261104` / `moonc v0.10.20+65efd5b93`）：
+   - 採用宣告式 `moon.work`, `moon.mod`, `moon.pkg`。
+   - 泛型類型 `WTree[S]` 之顯式方法提升語法為 `pub extend WTree with Eq::{ equal, not_equal }`（不含型別參數括號）；`guard` 與 `extend` 為保留字，命名參數與方法時須避開。
+2. 第一階段前沿論文（`M1..M7`）：
+   - Sterbac & Sterling (2026, arXiv:2607.11329, POPL '27)：無煩擾累積宇宙小性判斷與編解碼 `⇓_i / ⇑_i`。
+   - Jiang, Hu, Oliveira (ICFP 2025, DOI 10.1145/3747508)：非累積與累積統一之層級／索引雙向 Kripke NbE。
+   - Sozeau & Bezem (TYPES 2025 / RocqPL 2026)：代數宇宙 `(0, +1, max)` 多項式差分圖與型變推論。
+   - Kaposi & Pujet (ICFP 2025, DOI 10.1145/3747535)：嚴格化顯式 σ-代換演算。
+3. 第二階段前沿論文（`M8..M14`）：
+   - ACM POPL/ICFP 2026 (`10.1145/3808322`, *Nested Inductive Types: Justified and Usable Nested Inductive Types in Lean and Rocq*)：以嚴格正參數遮罩驅動稀疏參數化（Sparse Parametricity），對常數參數零額外假設開銷地支援巢狀歸納類型。
+   - Dybjer-Setzer (`IR` Codes) 與 Forsberg-Setzer / Kaposi-Kovács-Altenkirch (*Theory of Signatures* for `II`/HIITs)：歸納-遞歸同時編解碼（如封閉 Tarski 宇宙 `USigmaIR`/`UPiIR`）與歸納-歸納互鎖伸縮語法 `(Con, Ty : Con -> Set)` 之遞歸-遞歸消元。
+   - `arXiv:2409.02603v4` (Jul 2025, 容器始代數與終共同代數雙模擬)、Birkedal-Møgelberg (`gDTT` 時鐘守護 `▷` 模態) 與 Abel-Pientka-Thibodeau（深度餘模式 Copatterns）：餘模式覆蓋完備性、守護信用生產力與流共同代數雙模擬。
+   - Atkey (POPL 2024, *Polynomial Time and Dependent Types*)、Eriksson-Danielsson-Abel (TYPES 2025, *A Quantitative Dependent Type Theory with Recursion / Universe*) 與 Šefl & Svoboda (*Additive Types in QTT*)：有序資源半環、伽羅瓦殘差減法 `p ⊖ q`、零階依賴類型形成自由、乘性張量配對與加性配對對偶及零階執行期抹除。
+   - Najmaei, Van der Weide, Ahrens, North (POPL 2026, `10.1145/3776725`, *A Type Theory for Comprehension Categories / Coercive Subtyping*)、Laurent, Lennon-Bertrand, Maillard (2024, *Definitional Functoriality for Dependent (Sub)Types*) 與 Kovács (`2LTT` 隱含參數與模式合一)：菱形相干強制子型別、Miller 高階模式合一搭配 Abel-Pientka 脊修剪，以及結構紀錄對名義品牌之範疇橋接。
 
 ================================================================================
-三、已定架構決策與七大模組完成清單
+三、十四大模組完成清單（Phase 1 + Phase 2 全部 100% 完成）
 ================================================================================
-【已完成事項（100% 完成並通過零警告檢驗）】
-1. 基礎文檔與配置：
-   - `/home/user/AGENT.md`（與 `/home/user/uploads/工程約束.md` `diff -u` 零差異）
-   - `/home/user/.gitignore`（排除 `.moon/`, `_build/`, `target/`, `uploads/` 等）
-   - `/home/user/moon.work`（統一管理七大模組）
-2. 第一層：零外部依賴獨立基礎模組（均可單獨編譯與跨模組複用）
-   - [已完成] `modules/m1_syntax_context` (`dtt/m1_syntax_context`)：
-     64-bit `occ_mask`/`slot_mask`/FNV-1a 雜湊 AST、Hash-Consed DAG `SyntaxArena`、嚴格化顯式 σ-代換演算、反擬陣伸縮語境依賴閉包、單純形弱化／強化映射、有色 Operad 推導樹嫁接。已通過即時 `inspect` 驗證並立即刪除臨時測試檔，配置完整 4 節 `README.md`。
-   - [已完成] `modules/m2_universe_cumul` (`dtt/m2_universe_cumul`)：
-     `(0, +1, max)` 代數宇宙標準形、Fuss-Free 累積宇宙小性合成與編解碼正規化、64-bit 可達矩陣快篩 + Tarjan SCC + SPFA 差分圖求解器、基於伽羅瓦正權環反駁之完備蘊涵判定 `entails_le`、Fourier-Motzkin 私有宇宙變數消元、Ramsey-Dilworth 宇宙鏈／反鏈分層。已通過即時 `inspect` 驗證並立即刪除臨時測試檔，配置完整 4 節 `README.md`。
-   - [已完成] `modules/m3_pi_sigma_types` (`dtt/m3_pi_sigma_types`)：
-     帶類型中性項 Kripke NbE 求值與類型導向 η-回引（Π, Σ, Unit, Nat, Id, Univ, Prop, Squash, Fuss-Free `⇓/⇑`）、雙向類型合成與檢驗核心、Church-Peano 自然數算術摺疊、依賴柯里化同構與依賴 Skolem 選擇同構往返驗證。已通過即時 `inspect` 驗證並立即刪除臨時測試檔，配置完整 4 節 `README.md`。
-   - [已完成] `modules/m4_curry_howard_prop` (`dtt/m4_curry_howard_prop`)：
-     一階依賴直覺主義邏輯公式與證明類型雙向同構函子、BHK 證明檢驗與 Squash 截斷消元守衛、Prawitz 迂迴正規化、Gentzen 序列演算切消元主定理（`count_cuts == 0`）與 β-正規化交換圖驗證、Kolmogorov-Plotkin CPS 古典排中律與 Peirce 律構造性證明合成、認證證明抹除與純計算見證提取。已通過即時 `inspect` 驗證並立即刪除臨時測試檔，配置完整 4 節 `README.md`。
-3. 第二層：範疇融合、對偶橋接與大一統核心模組
-   - [已完成] `modules/m5_fibration_kan` (`dtt/m5_fibration_kan`，整合 M1, M2, M3)：
-     `SynExpr <-> CoreTm` 雙向函子橋、Grothendieck 理解纖維化與劈裂笛卡兒重索引、沿顯示投影之左右 Kan 擴張（`Σ_π` 與 `Π_π`）、語境纖維積／理論推出構造、Beck-Chevalley 自然同構 NbE 驗證、Grothendieck 覆蓋截面層黏合、Operad 纖維推導嫁接。已通過即時 `inspect` 驗證並立即刪除臨時測試檔，配置完整 4 節 `README.md`。
-   - [已完成] `modules/m6_chu_galois_bridge` (`dtt/m6_chu_galois_bridge`，整合 M1, M2, M3, M4)：
-     硬體 64-bit 位元矩陣 Chu 空間（含類型檢驗 Chu 空間與宇宙蘊涵 Chu 空間）、自對偶轉置與 O(1) 位元級全域伽羅瓦伴隨檢驗、雙命名空間邏輯至統一依賴核心證明編譯器、依賴張量—直和分配同構、Writer-Squash Monad 分配律、Morita 等價憑證、右分數局部化屋頂複合與摺疊、博弈語義策略切消元隱藏複合。已通過即時 `inspect` 驗證並立即刪除臨時測試檔，配置完整 4 節 `README.md`。
-   - [已完成] `modules/m7_unified_kernel` (`dtt/m7_unified_kernel`，整合 M1..M6)：
-     累積與非累積雙模態大一統定理認證器、端到端柯里-霍華德證明消除與計算見證提取重驗管線、反擬陣相容語境自同構與纖維代換半直積複合、依賴伸縮短正合序列分裂障礙秩與右逆截面合成、全域核心遙測巡檢。已通過單模組與跨全棧即時 `inspect` 驗證並立即刪除臨時測試檔，配置完整 4 節 `README.md`。
-4. 全局文檔與目錄完整性：
-   - `/home/user/README.md` 與 `/home/user/modules/README.md` 均已按 4 節規範建立完成。
+【第一階段模組（保持原通過驗證狀態，零重測）】
+- [已完成] `modules/m1_syntax_context` (`dtt/m1_syntax_context`)
+- [已完成] `modules/m2_universe_cumul` (`dtt/m2_universe_cumul`)
+- [已完成] `modules/m3_pi_sigma_types` (`dtt/m3_pi_sigma_types`)
+- [已完成] `modules/m4_curry_howard_prop` (`dtt/m4_curry_howard_prop`)
+- [已完成] `modules/m5_fibration_kan` (`dtt/m5_fibration_kan`)
+- [已完成] `modules/m6_chu_galois_bridge` (`dtt/m6_chu_galois_bridge`)
+- [已完成] `modules/m7_unified_kernel` (`dtt/m7_unified_kernel`)
+
+【第二階段獨立基礎模組（零外部依賴，均已完成即時 `inspect` 驗證並刪除臨時測試檔）】
+- [已完成] `modules/m8_inductive_family` (`dtt/m8_inductive_family`)：
+  極性晶格（嚴格區隔 `StrictlyPositive` 與雙重否定 `Positive`）、64-bit `sp_param_mask` 巢狀歸納稀疏參數化檢驗、Dybjer-Setzer 泛型 `IRCode` 與封閉宇宙 `IRUni` 基數同時解碼、Forsberg-Kaposi `(IICtx, IITy)` 互鎖檢驗與遞歸-遞歸消元、容器 `WTree` 摺疊。配置完整 4 節 `README.md`。
+- [已完成] `modules/m9_coalgebra_stream` (`dtt/m9_coalgebra_stream`)：
+  終共同代數 `InfStream` 展開與奇偶交錯同構、記憶化 Cauchy 卷積與形式導數 Leibniz 律、餘模式字典樹覆蓋與冗餘檢驗、時鐘守護信用生產力檢驗、Hopcroft-Karp 並查集 `O((N1+N2)α(N1+N2))` 無限視界精確雙模擬求解器。配置完整 4 節 `README.md`。
+- [已完成] `modules/m10_affine_quant_types` (`dtt/m10_affine_quant_types`)：
+  四元仿射—量化半環 `{0, 1, <=1, ω}` 與伽羅瓦殘差減法 `residuated_sub`、單一 `UInt64` SWAR 32 變數資源向量 `UsageVec64`、零階依賴類型形成自由、乘性 `Σ_π` 與加性 `A & B` 雙向資源檢驗器、認證零階執行期抹除器 `erase_qtt_term`。配置完整 4 節 `README.md`。
+- [已完成] `modules/m11_polymorphism_coercion_nom` (`dtt/m11_polymorphism_coercion_nom`)：
+  依賴多型方案隱含元變數展開與關係參數化維度、Knuth-Bendix 權重遞減終止重寫器、模重寫 Miller 高階模式合一（含 Occurs Check、Scope Escape 阻斷與 Flex-Flex 脊修剪）、菱形相干強制轉換合成與執行器、12 指令無分支 `popcount64` `O(1)` 稀疏結構紀錄投影、生成式名義品牌隔離與受控遺忘去品牌化。配置完整 4 節 `README.md`。
+
+【第二階段範疇融合、對偶橋接與全棧總成模組（均已完成即時 `inspect` 驗證並刪除臨時測試檔）】
+- [已完成] `modules/m12_initial_final_duality` (`dtt/m12_initial_final_duality`，整合 `M1, M3, M6, M8, M9`)：
+  始代數觀測樹與終共同代數無窮流之 64-bit Chu 空間對偶、去森林化雙變形 `hylo_deforest`、雙模擬商最小化並駐留至 M1 `SyntaxArena` 達成 `O(1)` 整數雙模擬比較、歸納-歸納內在語法至 M3 NbE 核心反射。配置完整 4 節 `README.md`。
+- [已完成] `modules/m13_qtt_elaboration_bridge` (`dtt/m13_qtt_elaboration_bridge`，整合 `M2, M4, M10, M11`)：
+  隱含參數至零階 QTT 零開銷精化編譯器、多型宇宙變數伽羅瓦圖註冊、`m1 & m2` / `m1 | m2` 64-bit 結構紀錄融合推出合成器、柯里-霍華德證明次結構邏輯 BCKW（`StrictLinearBCI` / `AffineBCK` / `UnrestrictedIntuitionistic`）自動分層器。配置完整 4 節 `README.md`。
+- [已完成] `modules/m14_phase2_unified_system` (`dtt/m14_phase2_unified_system`，整合 `M1..M13` 全棧十三模組)：
+  十九大依賴類型論概念統一註冊、精化、認證、雙模擬駐留與跨階段全域不變量遙測系統 `Phase2UnifiedSystem`。配置完整 4 節 `README.md`。
 
 ================================================================================
 四、未完成事項與待定事項
 ================================================================================
-- 未完成事項：無（所有十大核心概念、全域／局部公理、範疇組合算子、分資料夾 README、全局零警告編譯檢驗均已完成）。
-- 待定事項（供後續迭代擴展參考）：
-  1. 可在 `m1`/`m3` 基礎上擴充高階歸納類型（Higher Inductive Types, HITs）或立方類型論（Cubical Interval `𝕀` 與 Kan `hcomp`/`transp`）模組。
-  2. 可在 `m7_unified_kernel` 外層增設表面語法剖析器（Surface Elaborator）與交互式命令列介面。
+- 未完成事項：無（附件一十大概念與附件二九大概念共十九大依賴類型論概念、十四大模組、所有資料夾 4 節 README、全局零警告 CI 檢驗、Git 提交與遠端推送均已完成）。
+- 待定事項（供未來第三階段擴展參考）：
+  1. 立方類型論（Cubical Type Theory：區間類型 `𝕀`、De Morgan 代數、Kan `transp`/`hcomp`、Glue 類型與計算性單價公理 Univalence）。
+  2. 模態同倫類型論（Cohesive / Spatial / Crisp Modal HoTT）與表面語法雙向精化前端（Concrete Parser + Pretty Printer）。

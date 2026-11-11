@@ -1,0 +1,115 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m9_coalgebra_stream"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn[S, A] ana_stream(StreamCoalg[S, A]) -> InfStream[A]
+
+pub fn are_automata_bisimilar(FiniteStreamAutomaton, FiniteStreamAutomaton) -> Bool raise CoalgebraError
+
+pub fn automaton_to_stream(FiniteStreamAutomaton) -> InfStream[Int32]
+
+pub fn check_copattern_coverage(Array[Array[CopatObs]]) -> CopatTrie raise CoalgebraError
+
+pub fn fibonacci_stream() -> InfStream[Int32]
+
+pub fn stream_add_int(InfStream[Int32], InfStream[Int32]) -> InfStream[Int32]
+
+pub fn stream_cauchy_mul(InfStream[Int32], InfStream[Int32]) -> InfStream[Int32]
+
+pub fn stream_derivative(InfStream[Int32]) -> InfStream[Int32]
+
+pub fn[A] stream_evens_odds(InfStream[A]) -> (InfStream[A], InfStream[A])
+
+pub fn[A] stream_hd(InfStream[A]) -> A
+
+pub fn[A] stream_interleave(InfStream[A], InfStream[A]) -> InfStream[A]
+
+pub fn[A, B] stream_map((A) -> B, InfStream[A]) -> InfStream[B]
+
+pub fn[A] stream_nth(Int32, InfStream[A]) -> A raise CoalgebraError
+
+pub fn[A] stream_take(Int32, InfStream[A]) -> Array[A] raise CoalgebraError
+
+pub fn[A] stream_tl(InfStream[A]) -> InfStream[A]
+
+pub fn[A, B, C] stream_zip_with((A, B) -> C, InfStream[A], InfStream[B]) -> InfStream[C]
+
+pub fn verify_guarded_productivity(CorecStreamExpr) -> Int32 raise CoalgebraError
+
+// Errors
+pub(all) suberror CoalgebraError {
+  NegativeStreamHorizon(Int32)
+  UncoveredCopatternPath(String)
+  RedundantCopatternClause(Int32)
+  UnguardedCorecursiveCall(Int32)
+  InvalidAutomatonState(Int32)
+}
+
+// Types and methods
+#derive(Compare, Eq, Hash, @debug.Debug)
+pub(all) enum CopatObs {
+  ObsHead
+  ObsTail
+}
+pub fn CopatObs::compare(Self, Self) -> Int32
+pub fn CopatObs::equal(Self, Self) -> Bool
+pub fn CopatObs::hash(Self) -> Int32
+pub fn CopatObs::hash_combine(Self, Hasher) -> Unit
+pub fn CopatObs::not_equal(Self, Self) -> Bool
+pub fn CopatObs::op_ge(Self, Self) -> Bool
+pub fn CopatObs::op_gt(Self, Self) -> Bool
+pub fn CopatObs::op_le(Self, Self) -> Bool
+pub fn CopatObs::op_lt(Self, Self) -> Bool
+pub fn CopatObs::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub enum CopatTrie {
+  TrieEmpty
+  TrieLeaf(Int32)
+  TrieSplit(CopatTrie, CopatTrie)
+}
+pub fn CopatTrie::equal(Self, Self) -> Bool
+pub fn CopatTrie::not_equal(Self, Self) -> Bool
+pub fn CopatTrie::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum CorecStreamExpr {
+  CSConst(Int32)
+  CSExtStream(String)
+  CSCons(Int32, CorecStreamExpr)
+  CSTail(CorecStreamExpr)
+  CSMapSucc(CorecStreamExpr)
+  CSZipAdd(CorecStreamExpr, CorecStreamExpr)
+  CSSelfRef
+}
+pub fn CorecStreamExpr::equal(Self, Self) -> Bool
+pub fn CorecStreamExpr::not_equal(Self, Self) -> Bool
+pub fn CorecStreamExpr::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct FiniteStreamAutomaton {
+  num_states : Int32
+  init_state : Int32
+  head_out : Array[Int32]
+  tail_next : Array[Int32]
+}
+pub fn FiniteStreamAutomaton::equal(Self, Self) -> Bool
+pub fn FiniteStreamAutomaton::not_equal(Self, Self) -> Bool
+pub fn FiniteStreamAutomaton::to_repr(Self) -> @debug.Repr
+
+pub struct InfStream[A] {
+  unfold_once : () -> (A, InfStream[A])
+}
+
+pub(all) struct StreamCoalg[S, A] {
+  seed : S
+  step : (S) -> (A, S)
+}
+
+// Type aliases
+
+// Traits

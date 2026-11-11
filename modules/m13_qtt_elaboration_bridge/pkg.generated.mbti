@@ -1,0 +1,51 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m13_qtt_elaboration_bridge"
+
+import {
+  "dtt/m10_affine_quant_types",
+  "dtt/m11_polymorphism_coercion_nom",
+  "dtt/m2_universe_cumul",
+  "dtt/m4_curry_howard_prop",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn amalgamate_structural_records(@m11_polymorphism_coercion_nom.CoercionEnv, @m11_polymorphism_coercion_nom.HybridTy, @m11_polymorphism_coercion_nom.HybridTy) -> StructuralRecordApex raise
+
+pub fn classify_substructural_proof(@m4_curry_howard_prop.CHTerm) -> SubstructuralClass raise
+
+pub fn compile_elab_to_qtt(@m11_polymorphism_coercion_nom.ElabTm, @m10_affine_quant_types.Grade) -> @m10_affine_quant_types.QTerm raise QTTBridgeError
+
+pub fn register_poly_scheme_universes(@m2_universe_cumul.UniverseGraph, @m11_polymorphism_coercion_nom.DepPolyScheme, Array[Int32]) -> Array[Int32] raise
+
+// Errors
+pub(all) suberror QTTBridgeError {
+  UnsolvedMetavariableInQTTBridge(Int32)
+  UnsupportedElabConstructInQTT(String)
+  ExpectedStructuralRecordTypes
+  IncompatibleOverlappingField(Int32)
+  UnsupportedCHProofInSubstructuralBridge
+}
+
+// Types and methods
+pub(all) struct StructuralRecordApex {
+  shared_mask : UInt64
+  union_mask : UInt64
+  apex_record_ty : @m11_polymorphism_coercion_nom.HybridTy
+  coercion_to_left : @m11_polymorphism_coercion_nom.CoercionProg
+  coercion_to_right : @m11_polymorphism_coercion_nom.CoercionProg
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) enum SubstructuralClass {
+  StrictLinearBCI
+  AffineBCK
+  UnrestrictedIntuitionistic
+}
+pub fn SubstructuralClass::equal(Self, Self) -> Bool
+pub fn SubstructuralClass::not_equal(Self, Self) -> Bool
+pub fn SubstructuralClass::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

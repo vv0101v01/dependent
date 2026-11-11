@@ -1,0 +1,7 @@
+import {
+  "dtt/m1_syntax_context" @m1,
+  "dtt/m3_pi_sigma_types" @m3,
+  "dtt/m6_chu_galois_bridge" @m6,
+  "dtt/m8_inductive_family" @m8,
+  "dtt/m9_coalgebra_stream" @m9,
+}

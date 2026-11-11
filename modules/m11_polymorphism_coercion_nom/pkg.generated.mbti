@@ -1,0 +1,151 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m11_polymorphism_coercion_nom"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn apply_coercion(CoercionProg, HybridVal) -> HybridVal raise PolyElabError
+
+pub fn instantiate_poly_scheme_implicits(MetaStore, ElabTm, DepPolyScheme, Array[Int32], Int32) -> (ElabTm, ElabTm, Array[Int32]) raise PolyElabError
+
+pub fn mk_structural_record_ty(Array[(Int32, HybridTy)]) -> HybridTy raise PolyElabError
+
+pub fn mk_structural_record_val(Array[(Int32, HybridVal)]) -> HybridVal raise PolyElabError
+
+pub fn popcount64(UInt64) -> Int32
+
+pub fn project_structural_field(HybridVal, Int32) -> HybridVal raise PolyElabError
+
+pub fn relational_parametricity_arity(Int32, Int32) -> Int32
+
+pub fn rewrite_normalize(Array[ImplicitRewriteRule], ElabTm) -> ElabTm
+
+pub fn seal_nominal(Int32, HybridVal) -> HybridVal
+
+pub fn shift_elab(ElabTm, Int32, Int32) -> ElabTm
+
+pub fn subst_elab(ElabTm, Int32, ElabTm) -> ElabTm
+
+pub fn subst_poly_univs(ElabTm, Array[Int32]) -> ElabTm raise PolyElabError
+
+pub fn synthesize_coercion(CoercionEnv, HybridTy, HybridTy) -> CoercionProg?
+
+pub fn unify_modulo_rewrites(MetaStore, Array[ImplicitRewriteRule], ElabTm, ElabTm) -> Unit raise PolyElabError
+
+pub fn unseal_nominal(Int32, HybridVal) -> HybridVal raise PolyElabError
+
+pub fn verify_rewrite_rule_terminating(ImplicitRewriteRule) -> Bool raise PolyElabError
+
+// Errors
+pub(all) suberror PolyElabError {
+  NonLinearMetaSpine(Int32)
+  MetaOccursCheckFailed(Int32)
+  MetaScopeEscape(Int32, Int32)
+  UnificationSymbolClash(ElabTm, ElabTm)
+  NonDecreasingRewriteRule(String)
+  UnboundRewritePatternVar(Int32)
+  UniversePolymorphismArityMismatch(Int32, Int32)
+  IncoherentCoercionDiamond(String, String)
+  DuplicateRecordField(Int32)
+  MissingStructuralField(Int32)
+  NominalBrandMismatch(Int32, Int32)
+  CoercionUnavailable
+}
+
+// Types and methods
+pub(all) struct BaseCoercionEdge {
+  src : String
+  dst : String
+  f : (Int32) -> Int32
+}
+
+pub struct CoercionEnv {
+  edges : Array[BaseCoercionEdge]
+  unbrandable_brands : Map[Int32, Bool]
+}
+pub fn CoercionEnv::add_prim_coercion(Self, String, String, (Int32) -> Int32) -> Unit
+pub fn CoercionEnv::allow_forgetful_unbrand(Self, Int32) -> Unit
+pub fn CoercionEnv::new() -> Self
+pub fn CoercionEnv::verify_diamond_coherence(Self, Array[Int32]) -> Bool raise PolyElabError
+
+pub enum CoercionProg {
+  CId
+  CPrimStep((Int32) -> Int32)
+  CSeq(CoercionProg, CoercionProg)
+  CProdMap(CoercionProg, CoercionProg)
+  CArrowMap(CoercionProg, CoercionProg)
+  CRecordMap(UInt64, Array[(Int32, CoercionProg)])
+  CUnbrandThen(Int32, CoercionProg)
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) struct DepPolyScheme {
+  name : String
+  univ_arity : Int32
+  implicit_tele : Array[(String, ElabTm)]
+  body_ty : ElabTm
+}
+pub fn DepPolyScheme::equal(Self, Self) -> Bool
+pub fn DepPolyScheme::not_equal(Self, Self) -> Bool
+pub fn DepPolyScheme::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum ElabTm {
+  EVar(Int32)
+  EPatVar(Int32)
+  EMeta(Int32, Array[Int32])
+  EUniv(Int32)
+  EPolyUniv(Int32)
+  EBase(String)
+  EPi(Bool, String, ElabTm, ElabTm)
+  ELam(Bool, String, ElabTm, ElabTm)
+  EApp(Bool, ElabTm, ElabTm)
+  ESym(String, Array[ElabTm])
+}
+pub fn ElabTm::equal(Self, Self) -> Bool
+pub fn ElabTm::not_equal(Self, Self) -> Bool
+pub fn ElabTm::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum HybridTy {
+  HPrim(String)
+  HProd(HybridTy, HybridTy)
+  HArrow(HybridTy, HybridTy)
+  HStructRecord(UInt64, Array[HybridTy])
+  HNominal(Int32, String, HybridTy)
+}
+pub fn HybridTy::equal(Self, Self) -> Bool
+pub fn HybridTy::not_equal(Self, Self) -> Bool
+pub fn HybridTy::to_repr(Self) -> @debug.Repr
+
+pub(all) enum HybridVal {
+  VPrim(Int32)
+  VPair(HybridVal, HybridVal)
+  VFun((HybridVal) -> HybridVal)
+  VStructRecord(UInt64, Array[HybridVal])
+  VNominal(Int32, HybridVal)
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) struct ImplicitRewriteRule {
+  name : String
+  lhs : ElabTm
+  rhs : ElabTm
+}
+pub fn ImplicitRewriteRule::equal(Self, Self) -> Bool
+pub fn ImplicitRewriteRule::not_equal(Self, Self) -> Bool
+pub fn ImplicitRewriteRule::to_repr(Self) -> @debug.Repr
+
+pub struct MetaStore {
+  mut next_meta : Int32
+  solutions : Map[Int32, (Int32, ElabTm)]
+}
+pub fn MetaStore::fresh_meta(Self, Int32) -> (Int32, ElabTm)
+pub fn MetaStore::new() -> Self
+pub fn MetaStore::zonk(Self, ElabTm) -> ElabTm
+
+// Type aliases
+
+// Traits

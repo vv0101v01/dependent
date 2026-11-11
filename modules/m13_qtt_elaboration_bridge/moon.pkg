@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/core/debug",
+  "dtt/m2_universe_cumul" @m2,
+  "dtt/m4_curry_howard_prop" @m4,
+  "dtt/m10_affine_quant_types" @m10,
+  "dtt/m11_polymorphism_coercion_nom" @m11,
+}

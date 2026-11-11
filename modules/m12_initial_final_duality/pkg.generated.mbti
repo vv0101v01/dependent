@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dtt/m12_initial_final_duality"
+
+import {
+  "dtt/m1_syntax_context",
+  "dtt/m3_pi_sigma_types",
+  "dtt/m6_chu_galois_bridge",
+  "dtt/m8_inductive_family",
+  "dtt/m9_coalgebra_stream",
+}
+
+// Values
+pub fn[Seed, S] ana_w((Seed) -> (S, Array[Seed]), Seed, Int32) -> @m8_inductive_family.WTree[S] raise DualityError
+
+pub fn build_algebra_coalgebra_chu(Array[@m8_inductive_family.WTree[(Int32, Int32)]], Array[@m9_coalgebra_stream.InfStream[Int32]]) -> @m6_chu_galois_bridge.ChuTypingSpace raise
+
+pub fn compile_ii_ty_to_core(@m8_inductive_family.IITy) -> @m3_pi_sigma_types.CoreTm
+
+pub fn eval_w_pattern_on_stream(@m8_inductive_family.WTree[(Int32, Int32)], @m9_coalgebra_stream.InfStream[Int32]) -> Bool raise
+
+pub fn[Seed, S, R] hylo_deforest((Seed) -> (S, Array[Seed]), (S, Array[R]) -> R, Seed, Int32) -> R raise DualityError
+
+pub fn localize_coalgebra_to_arena_id(@m1_syntax_context.SyntaxArena, @m9_coalgebra_stream.FiniteStreamAutomaton) -> Int32 raise
+
+pub fn minimize_stream_coalgebra(@m9_coalgebra_stream.FiniteStreamAutomaton) -> @m9_coalgebra_stream.FiniteStreamAutomaton raise
+
+pub fn reflect_ii_ctx_and_certify_ty(@m8_inductive_family.IICtx, @m8_inductive_family.IITy) -> (@m3_pi_sigma_types.JudgmentCtx, @m3_pi_sigma_types.Val, Int32) raise
+
+// Errors
+pub(all) suberror DualityError {
+  UnfoldDepthExceeded(Int32)
+  ChuSizeExceeded(Int32)
+  HyloFusionDisagreement
+}
+
+// Types and methods
+
+// Type aliases
+
+// Traits

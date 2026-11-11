@@ -6,4 +6,11 @@ members = [
   "modules/m5_fibration_kan",
   "modules/m6_chu_galois_bridge",
   "modules/m7_unified_kernel",
+  "modules/m8_inductive_family",
+  "modules/m9_coalgebra_stream",
+  "modules/m10_affine_quant_types",
+  "modules/m11_polymorphism_coercion_nom",
+  "modules/m12_initial_final_duality",
+  "modules/m13_qtt_elaboration_bridge",
+  "modules/m14_phase2_unified_system",
 ]
