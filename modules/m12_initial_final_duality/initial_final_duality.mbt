@@ -213,7 +213,16 @@ pub fn localize_coalgebra_to_arena_id(
 /// Compiles well-typed intrinsic `(IICtx, IITy)` into `(JudgmentCtx, CoreTm)` and certifies `check_is_type`!
 pub fn compile_ii_ty_to_core(ty : @m8.IITy) -> @m3.CoreTm {
   match ty {
-    IIBase(_, card) => if card == 1 { CUnit } else { CNat }
+    // Exact finite-cardinality reflection: `|El| = 0 -> Empty`, `|El| = 1 -> Unit`,
+    // `|El| >= 2 -> Nat` (the M3 canonical type with at least two distinct elements).
+    IIBase(_, card) =>
+      if card == 0 {
+        CEmpty
+      } else if card == 1 {
+        CUnit
+      } else {
+        CNat
+      }
     IIPi(_, a, b) =>
       CPi("x", compile_ii_ty_to_core(a), compile_ii_ty_to_core(b))
     IISigma(_, a, b) =>

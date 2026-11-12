@@ -29,7 +29,9 @@ pub extend HybridTy with @debug.Debug::{to_repr}
 pub(all) enum HybridVal {
   VPrim(Int32)
   VPair(HybridVal, HybridVal)
-  VFun((HybridVal) -> HybridVal)
+  /// Function values carry RAISING closures so that contravariant-covariant
+  /// coercion wrappers propagate genuine coercion failures (no silent fallback).
+  VFun((HybridVal) -> HybridVal raise PolyElabError)
   VStructRecord(UInt64, Array[HybridVal])
   VNominal(Int32, HybridVal)
 }
@@ -48,11 +50,13 @@ pub fn popcount64(x0 : UInt64) -> Int32 {
 }
 
 ///|
-/// Build a canonical `HStructRecord` from an arbitrary unsorted array of `(field_id, field_ty)` pairs!
-/// Automatically sorts by `field_id`, builds `field_mask`, and guarantees Order-Independent Structural Identity!
-pub fn mk_structural_record_ty(
-  entries : Array[(Int32, HybridTy)],
-) -> HybridTy raise PolyElabError {
+/// Shared canonicalization core for structural records (deduplicates the type-level
+/// and value-level builders): validates field ids into `[0, 64)`, builds the 64-bit
+/// `field_mask`, and sorts entries strictly by increasing `field_id`, guaranteeing
+/// Order-Independent Structural Identity.
+fn[K] sorted_record_entries(
+  entries : Array[(Int32, K)],
+) -> (UInt64, Array[K]) raise PolyElabError {
   let mut mask = 0UL
   for kv in entries {
     let fid = kv.0
@@ -64,7 +68,7 @@ pub fn mk_structural_record_ty(
     }
     mask = mask | (1UL << fid)
   }
-  let sorted : Array[HybridTy] = []
+  let sorted : Array[K] = []
   for fid = 0; fid < 64; fid = fid + 1 {
     if ((mask >> fid) & 1UL) != 0UL {
       for kv in entries {
@@ -74,6 +78,16 @@ pub fn mk_structural_record_ty(
       }
     }
   }
+  (mask, sorted)
+}
+
+///|
+/// Build a canonical `HStructRecord` from an arbitrary unsorted array of `(field_id, field_ty)` pairs!
+/// Automatically sorts by `field_id`, builds `field_mask`, and guarantees Order-Independent Structural Identity!
+pub fn mk_structural_record_ty(
+  entries : Array[(Int32, HybridTy)],
+) -> HybridTy raise PolyElabError {
+  let (mask, sorted) = sorted_record_entries(entries)
   HStructRecord(mask, sorted)
 }
 
@@ -81,28 +95,28 @@ pub fn mk_structural_record_ty(
 pub fn mk_structural_record_val(
   entries : Array[(Int32, HybridVal)],
 ) -> HybridVal raise PolyElabError {
-  let mut mask = 0UL
-  for kv in entries {
-    let fid = kv.0
-    if fid < 0 || fid >= 64 {
-      raise PolyElabError::MissingStructuralField(fid)
-    }
-    if ((mask >> fid) & 1UL) != 0UL {
-      raise PolyElabError::DuplicateRecordField(fid)
-    }
-    mask = mask | (1UL << fid)
-  }
-  let sorted : Array[HybridVal] = []
-  for fid = 0; fid < 64; fid = fid + 1 {
-    if ((mask >> fid) & 1UL) != 0UL {
-      for kv in entries {
-        if kv.0 == fid {
-          sorted.push(kv.1)
-        }
-      }
-    }
-  }
+  let (mask, sorted) = sorted_record_entries(entries)
   VStructRecord(mask, sorted)
+}
+
+///|
+/// Type-level twin of `project_structural_field`: O(1) bitmask + popcount projection
+/// of field `fid`'s TYPE out of a canonical `HStructRecord` type (`None` if absent,
+/// so the lookup is a TOTAL function usable inside non-raising coercion synthesis).
+pub fn project_structural_field_ty(rec_ty : HybridTy, fid : Int32) -> HybridTy? {
+  if fid < 0 || fid >= 64 {
+    return None
+  }
+  match rec_ty {
+    HStructRecord(mask, tys) => {
+      if ((mask >> fid) & 1UL) == 0UL {
+        return None
+      }
+      let lower_mask = if fid == 0 { 0UL } else { (1UL << fid) - 1UL }
+      Some(tys[popcount64(mask & lower_mask)])
+    }
+    _ => None
+  }
 }
 
 ///|
@@ -187,15 +201,13 @@ pub fn apply_coercion(
     CArrowMap(c_dom_contra, c_cod_cov) =>
       match v {
         VFun(fn_body) =>
-          VFun(fn(arg_sup) {
-            // Safe contravariant-covariant wrapper (note closures inside `VFun` are total on well-typed values)
-            let arg_sub = apply_coercion(c_dom_contra, arg_sup) catch {
-              _ => arg_sup
-            }
+          // Contravariant-covariant wrapper. On well-typed values both sub-coercions
+          // are total; a failure indicates a genuine coercion bug and is PROPAGATED
+          // (no silent fallback that would pass through mistyped values).
+          VFun(arg_sup => {
+            let arg_sub = apply_coercion(c_dom_contra, arg_sup)
             let res_sub = fn_body(arg_sub)
-            apply_coercion(c_cod_cov, res_sub) catch {
-              _ => res_sub
-            }
+            apply_coercion(c_cod_cov, res_sub)
           })
         _ => raise PolyElabError::CoercionUnavailable
       }
@@ -393,7 +405,7 @@ pub fn synthesize_coercion(
         (Some(c_dom), Some(c_cod)) => Some(CArrowMap(c_dom, c_cod))
         _ => None
       }
-    (HStructRecord(m_sub, f_sub), HStructRecord(m_sup, f_sup)) => {
+    (HStructRecord(m_sub, _), HStructRecord(m_sup, _)) => {
       // O(1) Width Subtyping Guard: `sub` MUST possess every field bit requested by `sup`!
       if (m_sup & m_sub.lnot()) != 0UL {
         return None
@@ -402,11 +414,15 @@ pub fn synthesize_coercion(
       let mut sup_pos = 0
       for fid = 0; fid < 64; fid = fid + 1 {
         if ((m_sup >> fid) & 1UL) != 0UL {
-          let lower = if fid == 0 { 0UL } else { (1UL << fid) - 1UL }
-          let sub_pos = popcount64(m_sub & lower)
-          match synthesize_coercion(env, f_sub[sub_pos], f_sup[sup_pos]) {
-            None => return None
-            Some(cf) => f_coercions.push((fid, cf))
+          let t_sub = project_structural_field_ty(sub, fid)
+          let t_sup = project_structural_field_ty(sup, fid)
+          match (t_sub, t_sup) {
+            (Some(a), Some(b)) =>
+              match synthesize_coercion(env, a, b) {
+                None => return None
+                Some(cf) => f_coercions.push((fid, cf))
+              }
+            _ => return None
           }
           sup_pos = sup_pos + 1
         }

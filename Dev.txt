@@ -128,9 +128,54 @@
   解析報錯 `[3002] unexpected f!(..)`，須改用普通函數 `assert_eq`/`assert_true`/`assert_false`。
 
 ================================================================================
+六、第四輪工程紀錄（第二階段 M8..M14 之除錯、去重、減債、清死碼）
+================================================================================
+【用戶指令】對第二輪 8–14 項工程（模組 M8..M14）執行除錯、去重、減債、清死碼，與第三輪 M1..M7 同等強度。
+
+【審計與修復對應（全部即寫即驗即刪臨時 wbtest 驗證通過）】
+1. (M9, 健全性) `are_automata_bisimilar` 原僅檢查初始狀態界與表長，未驗證遷移全域性：
+   `tail_next[i]` 越出 `[0, N)` 時下游並查集探索將以陣列越界 panic 而非類型化錯誤。
+   新增兩自動機之遷移全域性預檢（`InvalidAutomatonState`）。驗證：越界自動機被拒、
+   等價/不等價判定與局部化最小化典範性不受影響。
+2. (M12, 語義保真) `compile_ii_ty_to_core` 將 II 基底基數 `card == 0` 錯誤反射為 `CNat`
+   （有元素類型）。改為精確有限基數反射：`0 -> CEmpty`、`1 -> CUnit`、`>= 2 -> CNat`；
+   card-0 反射仍通過 M3 `check_is_type` 良類認證。
+3. (M11, 健全性) `apply_coercion` 之 `CArrowMap` 執行器原以兩處 `catch { _ => ... }`
+   静默回退（逆變域強制失敗時直接透傳原值、協變值域失敗時透傳原結果），
+   會掩蓋真實強制轉換錯誤並讓錯型值流通。移除兩處静默回退：`HybridVal::VFun` 欄位
+   類型改為可 raise 閉包 `(HybridVal) -> HybridVal raise PolyElabError`，失敗嚴格傳播。
+   驗證：錯型引數觸發傳播、良類端到端應用（×10 合成）不受影響。
+4. (M11, 去重) `mk_structural_record_ty` 與 `mk_structural_record_val` 原為兩份近乎相同之
+   25 行遮罩建構/排序邏輯。抽取單一泛型核心 `sorted_record_entries[K]`（驗證 fid 界、
+   建 `field_mask`、按 fid 嚴格排序），兩建構器收斂為 3 行包裝；並新增值層
+   `project_structural_field` 之全函數型別層對偶 `project_structural_field_ty :
+   HybridTy -> Int32 -> HybridTy?`（O(1) 位元遮罩 + popcount，None 表欄位不存在）。
+5. (M11+M13, 去重) M13 `amalgamate_structural_records` 原以 4 處手寫
+   `f[popcount64(m & low)]` 定位欄位型別，M11 `synthesize_coercion` 亦有 2 處同構邏輯；
+   全部改用 `project_structural_field_ty`，消除 6 處重複位元算術。
+6. (M14, 清死碼) 移除 `collect_phase2_telemetry` 中僅為壓制 unused-import 警告之空操作
+   `let _ = @m1.mk_unit_ty()` 樁，並從 `moon.pkg` 刪除 `dtt/m1_syntax_context` 冗餘直接
+   導入（M14 經 M7 核心之 `SyntaxArena`、M12 與 M13 間接使用 M1；直接命名引用為零）。
+7. (審計後保留項，非缺陷) 以下經逐一推演確認為正確設計或已文檔化之公理 API，保留不動：
+   M9 `stream_cauchy_mul` 之共享歷史緩衝為 append-once 冪等設計（任意觀察序一致）；
+   M10 `UsageVec64::add` 之 SWAR 快速路徑經逐 slot 位元編碼推演（GOne=01/GAffine=10）
+   證實僅於 OR==add 之 slot 情形觸發，健全；M10 `QTensorPair^0` 之「首分量擦除」與
+   `erase_qtt_term` 完全一致且檢驗器同步；M11 `subst_elab` 之 EMeta 簡化與
+   `relational_parametricity_arity` 公式 API 均為文檔化約定；M12 `minimize` 之
+   `None => 0` 分支為不可達防禦臂；M9 `stream_map`、M12 `ana_w` 等零調用導出皆為
+   README 記載之範疇組合子 API。
+
+【驗證方式（即寫即驗即刪）】
+- 對 m9/m11/m12/m13 各寫一個臨時 `*_wbtest.mbt`（遷移全域性拒絕、紀錄標準形與投影對偶、
+  CArrowMap 傳播×良類應用、card-0 反射、融合推出回歸），`moon test -p dtt/<pkg>` 全過後
+  立即刪除；`find -name "*test*.mbt"` 歸零。
+- 全局 CI：`moon fmt --check`、`moon check --deny-warn`（42 tasks，14 模組）、`moon build`
+  零警告零錯誤。
+
+================================================================================
 四、未完成事項與待定事項
 ================================================================================
-- 未完成事項：無（十九大概念、十四大模組、第三輪用戶審計 15 項缺陷修復、所有資料夾 4 節 README、全局零警告 CI 檢驗、Git 提交與遠端推送均已完成）。
+- 未完成事項：無（十九大概念、十四大模組、第三輪 15 項缺陷修復、第四輪 M8..M14 除錯去重減債清死碼、所有資料夾 4 節 README、全局零警告 CI 檢驗、Git 提交與遠端推送均已完成）。
 - 待定事項（供未來第三階段擴展參考）：
   1. 立方類型論（Cubical Type Theory：區間類型 `𝕀`、De Morgan 代數、Kan `transp`/`hcomp`、Glue 類型與計算性單價公理 Univalence）。
   2. 模態同倫類型論（Cohesive / Spatial / Crisp Modal HoTT）與表面語法雙向精化前端（Concrete Parser + Pretty Printer）。

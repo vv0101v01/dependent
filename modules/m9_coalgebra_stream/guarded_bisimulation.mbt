@@ -227,6 +227,18 @@ pub fn are_automata_bisimilar(
     m2.tail_next.length() != n2 {
     raise CoalgebraError::InvalidAutomatonState(m2.init_state)
   }
+  // Transition totality: every `tail_next` must stay inside the state space,
+  // otherwise the union-find exploration would index out of bounds.
+  for i = 0; i < n1; i = i + 1 {
+    if m1.tail_next[i] < 0 || m1.tail_next[i] >= n1 {
+      raise CoalgebraError::InvalidAutomatonState(i)
+    }
+  }
+  for j = 0; j < n2; j = j + 1 {
+    if m2.tail_next[j] < 0 || m2.tail_next[j] >= n2 {
+      raise CoalgebraError::InvalidAutomatonState(j)
+    }
+  }
 
   let total = n1 + n2
   let parent : Array[Int32] = []

@@ -11,7 +11,7 @@
    $$\mathsf{hylo\_deforest}(\gamma, \alpha, s) \;=\; \mathsf{cata\_w}(\alpha,\ \mathsf{ana\_w}(\gamma, s))$$
 3. **定理 M12.T3（雙模擬局部化 $\mathsf{Coalg}[\mathsf{Bisim}^{-1}]$ 與 $O(1)$ Arena 駐留完備定理）**：`minimize_stream_coalgebra` 將任意含不可達死狀態或冗餘迴圈之有限狀態流自動機約化為唯一典範最小套索商自動機，再經 `localize_coalgebra_to_arena_id` 駐留於 M1 `SyntaxArena` 後，將無限視界雙模擬弱等價強行升格為 $O(1)$ 整數相等：
    $$M_1 \sim_{\mathrm{bisim}} M_2 \iff \mathsf{localize\_coalgebra\_to\_arena\_id}(M_1) = \mathsf{localize\_coalgebra\_to\_arena\_id}(M_2)$$
-4. **定理 M12.T4（歸納-歸納內在語法至雙向 NbE 核心反射健全性定理）**：任意通過 M8 互鎖良構檢驗之 `(IICtx, IITy)` 經 `reflect_ii_ctx_and_certify_ty` 反射後，必構成 M3 `JudgmentCtx` 下良類型之語義核心類型。
+4. **定理 M12.T4（歸納-歸納內在語法至雙向 NbE 核心反射健全性定理）**：任意通過 M8 互鎖良構檢驗之 `(IICtx, IITy)` 經 `reflect_ii_ctx_and_certify_ty` 反射後，必構成 M3 `JudgmentCtx` 下良類型之語義核心類型；基底類按**精確有限基數**反射：$|El| = 0 \mapsto \mathsf{Empty}$、$|El| = 1 \mapsto \mathbf{1}$、$|El| \ge 2 \mapsto \mathbb{N}$。
 
 ---
 

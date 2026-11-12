@@ -11,7 +11,7 @@
    $$D(f * g) \;=\; (D f) * g \;+\; f * (D g)$$
 3. **定理 M9.T2（深度餘模式字典樹精確分割定理）**：餘模式子句集通過 `check_copattern_coverage` 當且僅當其構造之 `CopatTrie` 無空葉（零遺漏觀測路徑）且無重疊前綴（零冗餘子句），保證餘模式定義具備確定性主歸約。
 4. **定理 M9.T3（時鐘守護信用點數生產力健全性定理）**：設建構子 `CSCons` 賦予 $+1$ 守護信用、解構子 `CSTail` 消耗 $-1$ 守護信用、`CSZipAdd`/`CSMapSucc` 保持信用不變；若每個自身調用點 `CSSelfRef` 之淨信用 $\ge 1$，則餘遞歸流定義（如 `fib = cons(0, cons(1, zip(fib, tl(fib))))`）在任意有限步內必產出下一個觀測元素。
-5. **定理 M9.T4（Hopcroft-Karp 並查集無限視界雙模擬等價定理）**：對有限狀態流自動機 $M_1, M_2$，並查集雙模擬推進（Bisimulation Up-To Equivalence）在至多 $N_1 + N_2 - 1$ 次合併內精確判定全無窮序列雙模擬等價 $\llbracket M_1 \rrbracket \sim \llbracket M_2 \rrbracket$。
+5. **定理 M9.T4（Hopcroft-Karp 並查集無限視界雙模擬等價定理）**：對有限狀態流自動機 $M_1, M_2$（輸入預檢初始狀態界、表長與**遷移全域性** `tail_next[i] \in [0, N)`，違者 `InvalidAutomatonState`），並查集雙模擬推進（Bisimulation Up-To Equivalence）在至多 $N_1 + N_2 - 1$ 次合併內精確判定全無窮序列雙模擬等價 $\llbracket M_1 \rrbracket \sim \llbracket M_2 \rrbracket$。
 
 ---
 

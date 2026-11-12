@@ -18,6 +18,8 @@ pub fn popcount64(UInt64) -> Int32
 
 pub fn project_structural_field(HybridVal, Int32) -> HybridVal raise PolyElabError
 
+pub fn project_structural_field_ty(HybridTy, Int32) -> HybridTy?
+
 pub fn relational_parametricity_arity(Int32, Int32) -> Int32
 
 pub fn rewrite_normalize(Array[ImplicitRewriteRule], ElabTm) -> ElabTm
@@ -123,7 +125,7 @@ pub fn HybridTy::to_repr(Self) -> @debug.Repr
 pub(all) enum HybridVal {
   VPrim(Int32)
   VPair(HybridVal, HybridVal)
-  VFun((HybridVal) -> HybridVal)
+  VFun((HybridVal) -> HybridVal raise PolyElabError)
   VStructRecord(UInt64, Array[HybridVal])
   VNominal(Int32, HybridVal)
 }

@@ -118,9 +118,9 @@ pub fn amalgamate_structural_records(
         let in1 = ((m1 >> fid) & 1UL) != 0UL
         let in2 = ((m2 >> fid) & 1UL) != 0UL
         if in1 && in2 {
-          let low = if fid == 0 { 0UL } else { (1UL << fid) - 1UL }
-          let t1 = f1[@m11.popcount64(m1 & low)]
-          let t2 = f2[@m11.popcount64(m2 & low)]
+          // Both mask bits are verified above, so the projections are `Some`.
+          let t1 = @m11.project_structural_field_ty(HStructRecord(m1, f1), fid).unwrap()
+          let t2 = @m11.project_structural_field_ty(HStructRecord(m2, f2), fid).unwrap()
           // Pick common subtype `t_meet` that coerces to both `t1` and `t2`:
           if synthesize_coercion_exists(cenv, t1, t2) {
             entries.push((fid, t1))
@@ -130,11 +130,11 @@ pub fn amalgamate_structural_records(
             raise QTTBridgeError::IncompatibleOverlappingField(fid)
           }
         } else if in1 {
-          let low = if fid == 0 { 0UL } else { (1UL << fid) - 1UL }
-          entries.push((fid, f1[@m11.popcount64(m1 & low)]))
+          let t = @m11.project_structural_field_ty(HStructRecord(m1, f1), fid).unwrap()
+          entries.push((fid, t))
         } else if in2 {
-          let low = if fid == 0 { 0UL } else { (1UL << fid) - 1UL }
-          entries.push((fid, f2[@m11.popcount64(m2 & low)]))
+          let t = @m11.project_structural_field_ty(HStructRecord(m2, f2), fid).unwrap()
+          entries.push((fid, t))
         }
       }
       let apex_ty = @m11.mk_structural_record_ty(entries)

@@ -197,8 +197,6 @@ pub fn Phase2UnifiedSystem::collect_phase2_telemetry(
   // Substructural BCKW + M4 check (`M4 + M10 + M13`):
   let comb_k = @m4.PTLam(TUnit, PTLam(TUnit, PTVar(1)))
   let bck_ok = @m13.classify_substructural_proof(comb_k) == AffineBCK
-  // Also touch M1 `mk_unit_ty` directly to ensure zero unused import warnings across all 13 modules!
-  let _ = @m1.mk_unit_ty()
 
   {
     phase1_telemetry: p1_tel,
